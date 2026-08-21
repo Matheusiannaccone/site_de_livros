@@ -20,6 +20,8 @@
 | RF-003 | O sistema deve permitir logout. | Essencial |
 | RF-004 | O sistema deve permitir recuperação de acesso por mecanismo suportado pelo provedor de autenticação. | Importante |
 | RF-005 | O usuário autenticado deve poder visualizar e editar dados permitidos do próprio perfil. | Essencial |
+| RF-006 | O usuário deve poder solicitar a exclusão da própria conta. | Essencial |
+| RF-007 | Ao excluir a conta, o usuário deve poder escolher entre excluir suas obras ou permitir que elas permaneçam disponíveis no sistema. | Essencial |
 
 ## 2.2 Livros
 
@@ -29,12 +31,16 @@
 | RF-011 | O autor deve poder editar seu próprio livro. | Essencial |
 | RF-012 | O autor deve poder excluir seu próprio livro. | Essencial |
 | RF-013 | O autor deve poder salvar um livro como rascunho. | Essencial |
-| RF-014 | O autor deve poder publicar um livro. | Essencial |
+| RF-014 | O autor deve poder publicar um livro quando os critérios mínimos de publicação forem atendidos. | Essencial |
 | RF-015 | O autor deve poder definir título e descrição da obra. | Essencial |
-| RF-016 | O autor deve poder associar uma capa ao livro. | Essencial |
-| RF-017 | O autor deve poder associar gênero(s) permitidos ao livro. | Essencial |
-| RF-018 | O sistema deve exibir somente obras públicas nas áreas públicas de descoberta. | Essencial |
+| RF-016 | O autor deve poder associar uma capa opcional ao livro. | Essencial |
+| RF-017 | O autor deve poder associar de 1 a 3 gêneros permitidos ao livro. | Essencial |
+| RF-018 | O sistema deve exibir somente obras publicadas nas áreas públicas de descoberta. | Essencial |
 | RF-019 | O sistema deve permitir que o autor visualize suas obras em rascunho. | Essencial |
+| RF-019A | Para ser publicado, um livro deve possuir título, descrição, de 1 a 3 gêneros e pelo menos um capítulo publicado. | Essencial |
+| RF-019B | O sistema deve permitir classificar uma obra como em andamento, concluída ou descontinuada, sem confundir essa classificação com seu estado de rascunho/publicação. | Essencial |
+| RF-019C | Quando uma obra for preservada após a exclusão da conta de seu autor, o sistema deve exibir sua autoria como "Autor desconhecido". | Essencial |
+| RF-019D | Quando uma obra não concluída for preservada após a exclusão da conta de seu autor, o sistema deve marcá-la como descontinuada. | Essencial |
 
 ## 2.3 Capítulos
 
@@ -43,23 +49,24 @@
 | RF-020 | O autor deve poder criar capítulos em seus próprios livros. | Essencial |
 | RF-021 | O autor deve poder editar capítulos próprios. | Essencial |
 | RF-022 | O autor deve poder excluir capítulos próprios. | Essencial |
-| RF-023 | O autor deve poder salvar capítulos como rascunho. | Essencial |
-| RF-024 | O autor deve poder publicar capítulos. | Essencial |
+| RF-023 | O autor deve poder salvar capítulos como rascunho mesmo que ainda não atendam aos critérios mínimos de publicação. | Essencial |
+| RF-024 | O autor deve poder publicar capítulos que atendam aos critérios mínimos de publicação. | Essencial |
 | RF-025 | O sistema deve ordenar capítulos de uma obra de forma definida. | Essencial |
 | RF-026 | Capítulos não publicados não devem ser exibidos a outros usuários. | Essencial |
+| RF-027 | Para ser publicado, um capítulo deve possuir título e conteúdo entre 500 e 15.000 caracteres, considerando espaços. | Essencial |
 
 ## 2.4 Descoberta e leitura
 
 | ID | Requisito | Prioridade |
 |---|---|---|
 | RF-030 | A página inicial deve apresentar livros publicados. | Essencial |
-| RF-031 | O usuário deve poder abrir a página de detalhes de um livro. | Essencial |
-| RF-032 | A página do livro deve listar os capítulos publicados. | Essencial |
-| RF-033 | O usuário deve poder abrir um capítulo publicado para leitura. | Essencial |
+| RF-031 | Visitantes autenticados ou não autenticados devem poder abrir a página de detalhes de um livro publicado. | Essencial |
+| RF-032 | A página pública do livro deve listar seus capítulos publicados. | Essencial |
+| RF-033 | Visitantes autenticados ou não autenticados devem poder abrir um capítulo publicado para leitura. | Essencial |
 | RF-034 | O leitor deve poder navegar para o capítulo anterior e para o próximo quando existirem. | Essencial |
 | RF-035 | O sistema deve permitir busca básica por livro. | Essencial |
 | RF-036 | O sistema deve permitir filtrar ou navegar por gênero. | Essencial |
-| RF-037 | O sistema deve permitir adicionar e remover livros da biblioteca/favoritos. | Essencial |
+| RF-037 | O usuário autenticado deve poder adicionar e remover livros da biblioteca/favoritos. | Essencial |
 
 ## 2.5 Recursos sociais e continuidade
 
@@ -105,17 +112,19 @@
 | RNF-012 | O leitor deve priorizar legibilidade e conforto visual. | Essencial |
 | RNF-013 | Componentes equivalentes devem manter padrões visuais consistentes. | Essencial |
 | RNF-014 | A aplicação deve possuir estados visuais para carregamento, erro, sucesso e ausência de conteúdo quando aplicável. | Importante |
+| RNF-015 | A interface deve informar de forma clara quando a autoria de uma obra preservada não estiver mais vinculada a uma conta e quando a obra estiver descontinuada. | Essencial |
 
 ## 3.3 Segurança
 
 | ID | Requisito | Prioridade |
 |---|---|---|
-| RNF-020 | Operações restritas devem exigir usuário autenticado. | Essencial |
+| RNF-020 | Operações restritas devem exigir usuário autenticado. A leitura de conteúdo publicado não deve exigir autenticação. | Essencial |
 | RNF-021 | A autorização não pode depender apenas de controles do frontend. | Essencial |
-| RNF-022 | Tabelas expostas devem possuir políticas RLS adequadas. | Essencial |
+| RNF-022 | Tabelas expostas devem possuir políticas RLS adequadas para leitura pública e operações autenticadas. | Essencial |
 | RNF-023 | Credenciais privilegiadas não devem ser incorporadas ao código público do frontend. | Essencial |
 | RNF-024 | Entradas de usuário devem ser tratadas de forma a reduzir risco de injeção de conteúdo e XSS. | Essencial |
 | RNF-025 | O upload de arquivos deve restringir formatos e limites definidos pelo projeto. | Importante |
+| RNF-026 | A exclusão definitiva da conta de autenticação e operações que exijam privilégio administrativo devem ocorrer por mecanismo server-side protegido. | Essencial |
 
 ## 3.4 Dados
 
@@ -125,6 +134,7 @@
 | RNF-031 | Relações essenciais devem usar chaves estrangeiras quando aplicável. | Essencial |
 | RNF-032 | Regras de integridade devem ser aplicadas no banco sempre que viável. | Essencial |
 | RNF-033 | Consultas frequentes devem poder receber índices conforme necessidade real. | Importante |
+| RNF-034 | O modelo de dados deve permitir preservar uma obra publicada após a remoção do perfil de seu autor sem manter vínculo obrigatório com a conta excluída. | Essencial |
 
 ## 3.5 Manutenção
 
