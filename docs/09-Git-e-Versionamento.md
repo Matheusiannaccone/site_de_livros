@@ -12,7 +12,9 @@ main
 
 A `main` representa o estado integrado e potencialmente apresentável.
 
-Evitar desenvolvimento cotidiano diretamente nela.
+Nenhum integrante deve desenvolver diretamente nela.
+
+Toda alteração destinada à `main` deve passar pelo fluxo de branch de trabalho + Pull Request.
 
 ## 3. Branches de trabalho
 
@@ -32,31 +34,44 @@ feature/login
 feature/criar-livro
 fix/navegacao-capitulos
 docs/modelo-dados
+refactor/servico-livros
 ```
 
-Branches devem ser curtas e focadas.
+Branches devem ser curtas, focadas e representar uma tarefa ou mudança específica.
 
-## 4. Fluxo
+Evitar misturar funcionalidades ou correções independentes na mesma branch.
+
+## 4. Fluxo de trabalho
 
 ```text
-main
+main atualizada
   ↓
 criar branch de trabalho
   ↓
-commits na branch de trabalho
+desenvolver na branch
   ↓
-push
+criar commits
   ↓
-Pull Request
+push da branch
   ↓
-revisão
+abrir Pull Request
+  ↓
+revisão por outro integrante
+  ↓
+ajustes, se necessários
+  ↓
+aprovação
   ↓
 merge em main
+  ↓
+excluir branch de trabalho quando não for mais necessária
 ```
+
+A `main` não deve ser usada para desenvolvimento cotidiano.
 
 ## 5. Commits
 
-Convenção recomendada baseada em Conventional Commits:
+A equipe deve utilizar uma convenção baseada em Conventional Commits:
 
 ```text
 feat: nova funcionalidade
@@ -80,13 +95,16 @@ refactor: separar servico de livros
 ## 6. Regras para commits
 
 - manter commits pequenos quando possível;
-- descrever o que mudou;
+- descrever claramente o que mudou;
 - evitar mensagens como `update`, `mudanças`, `teste2`;
 - não versionar credenciais;
 - revisar `git status` antes de commit;
-- evitar misturar funcionalidades independentes no mesmo commit.
+- evitar misturar funcionalidades independentes no mesmo commit;
+- manter o tipo do Conventional Commit coerente com a alteração realizada.
 
 ## 7. Pull Requests
+
+Toda alteração destinada à `main` deve ser integrada por Pull Request.
 
 Um PR deve informar:
 
@@ -96,17 +114,63 @@ Um PR deve informar:
 - screenshots quando a mudança for visual;
 - riscos ou pendências conhecidas.
 
-Sempre que possível, outro integrante deve revisar antes do merge.
+### 7.1 Revisão obrigatória
+
+Todo PR deve ser revisado por pelo menos **1 integrante diferente do autor** antes do merge.
+
+O autor do PR não deve aprovar a própria alteração como revisão final.
+
+Para mudanças consideradas sensíveis, como:
+
+- banco de dados;
+- autenticação;
+- políticas RLS;
+- segurança;
+- arquitetura;
+- fluxo de exclusão de conta;
+- alterações estruturais com alto impacto;
+
+o grupo pode solicitar uma segunda revisão antes do merge.
+
+### 7.2 Responsabilidade do revisor
+
+O revisor deve verificar, dentro do escopo da alteração:
+
+- se a implementação corresponde à tarefa;
+- se não há mudança desnecessária fora do escopo;
+- se a lógica principal faz sentido;
+- se há risco evidente de quebrar funcionalidades existentes;
+- se o código segue as convenções do projeto;
+- se a documentação relacionada foi atualizada quando necessário;
+- se os testes informados pelo autor são suficientes para o tipo de mudança.
+
+O revisor pode:
+
+- aprovar;
+- solicitar alterações;
+- comentar dúvidas ou sugestões.
+
+O merge só deve ocorrer após a aprovação necessária.
 
 ## 8. Conflitos
+
+Quem abriu o Pull Request é o responsável principal por resolver conflitos da própria branch antes do merge.
 
 Ao encontrar conflito:
 
 1. identificar quais alterações estão sendo combinadas;
-2. não escolher automaticamente uma versão sem entender;
-3. conversar com o autor da outra mudança quando necessário;
-4. testar após resolver;
-5. só então concluir merge/rebase.
+2. não escolher automaticamente uma versão sem entender o motivo das diferenças;
+3. atualizar a branch de trabalho com a versão mais recente da `main` quando necessário;
+4. conversar com o autor da outra mudança quando o conflito envolver código ou decisão que não esteja clara;
+5. resolver o conflito preservando o comportamento correto das duas alterações sempre que possível;
+6. testar novamente a funcionalidade após a resolução;
+7. enviar a branch atualizada;
+8. solicitar nova revisão quando a resolução alterar parte relevante do PR;
+9. só então concluir o merge.
+
+Se o conflito envolver alterações de outro integrante e houver dúvida sobre qual versão deve prevalecer, a resolução deve ser feita em conjunto pelos envolvidos.
+
+Conflitos não devem ser resolvidos diretamente na `main`.
 
 ## 9. Semantic Versioning
 
@@ -187,7 +251,8 @@ Se o grupo configurar proteção de branch:
 - impedir push direto na `main`;
 - exigir PR;
 - exigir branch atualizada quando fizer sentido;
-- exigir revisão conforme disponibilidade da equipe.
+- exigir pelo menos uma aprovação antes do merge;
+- bloquear aprovação do próprio autor quando a configuração disponível permitir.
 
 Não criar burocracia maior do que o grupo consegue manter.
 
@@ -200,5 +265,29 @@ Uma pessoa pode coordenar integrações, mas todos devem compreender:
 - push;
 - atualizar branch;
 - abrir PR;
+- revisar PR;
 - resolver conflitos simples;
 - verificar versão atual.
+
+A responsabilidade de revisão não fica presa a um integrante específico. Qualquer membro que não seja o autor pode revisar, desde que tenha condições de compreender a alteração.
+
+Mudanças sensíveis devem, sempre que possível, ser revisadas por alguém mais familiarizado com a área afetada.
+
+## 14. Resumo operacional
+
+Para qualquer tarefa:
+
+```text
+1. atualizar main local
+2. criar branch feature/fix/docs/refactor
+3. desenvolver somente na branch
+4. criar commits seguindo Conventional Commits
+5. enviar a branch para o GitHub
+6. abrir Pull Request
+7. obter pelo menos 1 aprovação de outro integrante
+8. resolver conflitos e testar novamente, se houver
+9. fazer merge em main
+10. atualizar a versão quando a mudança exigir
+```
+
+Nenhum integrante pode desenvolver diretamente na `main`.
