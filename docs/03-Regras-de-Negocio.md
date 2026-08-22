@@ -39,6 +39,11 @@ Uma obra preservada após exclusão da conta do autor não poderá mais ser edit
 **RN-010 — Estado da obra**  
 Um livro deve possuir estado editorial que diferencie, no mínimo, conteúdo em rascunho de conteúdo publicado.
 
+Os valores controlados do MVP serão:
+
+- `draft`;
+- `published`.
+
 **RN-011 — Visibilidade de rascunho**  
 Obras em rascunho não devem aparecer no catálogo público.
 
@@ -57,21 +62,35 @@ Os gêneros devem ser obtidos de uma coleção/tabela controlada. O usuário nã
 **RN-016 — Capa**  
 A capa é opcional. Quando utilizada, deve ser tratada como arquivo associado ao livro. O banco deve armazenar metadados ou referência ao arquivo, não o binário da imagem na tabela principal.
 
-**RN-017 — Critérios mínimos de publicação do livro**  
-Para ser publicado, um livro deve possuir:
+**RN-017 — Validade mínima de criação do livro**  
+Um livro só deve ser considerado criado quando possuir, no mínimo:
 
+- autor válido;
 - título;
-- descrição;
-- no mínimo 1 e no máximo 3 gêneros;
-- pelo menos 1 capítulo publicado.
+- pelo menos 1 gênero;
+- no máximo 3 gêneros.
 
-Esses critérios não impedem que uma obra incompleta seja salva como rascunho.
+Um rascunho pode estar incompleto, mas não deve ser estruturalmente inválido.
+
+Após sua criação, ainda podem estar ausentes:
+
+- descrição;
+- capa;
+- capítulos;
+- data de publicação.
+
+**RN-017A — Criação atômica**  
+A criação do livro e de suas associações obrigatórias de gênero deve ser tratada como uma única operação lógica.
+
+O sistema não deve deixar persistido um livro sem os requisitos mínimos definidos em RN-017.
 
 **RN-018 — Gêneros por obra**  
-Cada livro publicado deve possuir entre 1 e 3 gêneros da lista controlada.
+Todo livro deve possuir entre 1 e 3 gêneros da lista controlada desde sua criação, inclusive enquanto estiver em rascunho.
 
 **RN-019 — Situação da história**  
-A situação narrativa da obra deve ser independente de seu estado editorial. O MVP deve distinguir:
+A situação narrativa da obra deve ser independente de seu estado editorial.
+
+O MVP deve distinguir:
 
 - `ongoing` — em andamento;
 - `completed` — concluída;
@@ -80,7 +99,24 @@ A situação narrativa da obra deve ser independente de seu estado editorial. O 
 Uma obra pode, por exemplo, estar `published` e `discontinued` ao mesmo tempo.
 
 **RN-019A — Descontinuação após exclusão do autor**  
-Quando uma obra preservada após exclusão da conta não estiver marcada como concluída, sua situação deve passar para descontinuada.
+Quando uma obra preservada após exclusão da conta não estiver marcada como concluída, sua situação deve passar para `discontinued`.
+
+**RN-019B — Idioma padrão**  
+O idioma padrão de uma nova obra no MVP será `pt-BR`.
+
+O modelo não deve impedir tecnicamente a utilização futura de outros códigos de idioma.
+
+**RN-019C — Critérios mínimos de publicação do livro**  
+Para transição de `draft` para `published`, o sistema deve garantir:
+
+- título válido;
+- descrição preenchida;
+- entre 1 e 3 gêneros;
+- pelo menos 1 capítulo publicado.
+
+Título e gêneros já devem existir desde a criação da obra.
+
+A capa continua opcional.
 
 ---
 
@@ -90,10 +126,33 @@ Quando uma obra preservada após exclusão da conta não estiver marcada como co
 Todo capítulo deve pertencer a exatamente um livro.
 
 **RN-021 — Ordenação**  
-Cada capítulo deve possuir uma posição dentro do livro, permitindo ordenação determinística.
+Cada capítulo deve possuir uma posição inteira positiva dentro do livro, permitindo ordenação determinística.
+
+**RN-021A — Sequência contínua**  
+No MVP, as posições dos capítulos devem formar uma sequência contínua:
+
+```text
+1, 2, 3, 4, ...
+```
+
+**RN-021B — Novo capítulo ao final**  
+Todo capítulo novo deve nascer no final da sequência existente.
+
+Sua posição deve corresponder à posição do último capítulo acrescida de 1.
+
+A atribuição da posição será responsabilidade do banco.
+
+**RN-021C — Sem reordenação no MVP**  
+No MVP:
+
+- o autor não poderá reorganizar capítulos;
+- não poderá inserir um novo capítulo entre capítulos existentes;
+- a posição não será escolhida manualmente pelo usuário.
 
 **RN-022 — Rascunho de capítulo**  
-Um capítulo em rascunho deve ser visível para o autor, mas não para leitores externos. Rascunhos podem ser salvos mesmo sem atingir os limites mínimos de publicação.
+Um capítulo em rascunho deve ser visível para o autor, mas não para leitores externos.
+
+Rascunhos podem ser salvos mesmo sem atingir os limites mínimos de publicação.
 
 **RN-023 — Capítulo publicado**  
 Somente capítulos publicados podem ser exibidos no fluxo público de leitura.
@@ -101,8 +160,25 @@ Somente capítulos publicados podem ser exibidos no fluxo público de leitura.
 **RN-024 — Exclusão de livro**  
 A estratégia de exclusão deve garantir que capítulos não permaneçam órfãos.
 
+**RN-024A — Exclusão sequencial de capítulo no MVP**  
+No MVP, a exclusão de um capítulo intermediário implica também a exclusão de todos os capítulos posteriores da mesma obra.
+
+Exemplo:
+
+```text
+Capítulos existentes:
+1 2 3 4 5 6 7 8 9 10
+
+Excluir capítulo 7:
+
+Capítulos restantes:
+1 2 3 4 5 6
+```
+
+Essa regra preserva a sequência contínua sem necessidade de renumeração no MVP.
+
 **RN-025 — Navegação sequencial**  
-Anterior e próximo devem respeitar a ordem dos capítulos publicados, ignorando rascunhos de outros capítulos.
+Anterior e próximo devem respeitar a posição dos capítulos publicados, ignorando rascunhos no fluxo público.
 
 **RN-026 — Critérios mínimos de publicação do capítulo**  
 Para ser publicado, um capítulo deve possuir:
@@ -139,10 +215,14 @@ Somente livros publicados devem aparecer em listagens públicas.
 Enquanto o catálogo for pequeno, a página inicial poderá exibir todos os livros publicados, respeitando paginação ou limites técnicos quando necessário.
 
 **RN-042 — Evolução de relevância**  
-A ordenação inicial poderá ser simples. Algoritmos de relevância personalizados são evoluções posteriores e devem ser documentados antes da implementação.
+A ordenação inicial poderá ser simples.
+
+Algoritmos de relevância personalizados são evoluções posteriores e devem ser documentados antes da implementação.
 
 **RN-043 — Filtro por gênero**  
-Um livro poderá possuir de 1 a 3 gêneros. A associação deve ser modelada de forma a permitir essa relação múltipla.
+Um livro possuirá de 1 a 3 gêneros.
+
+A associação deve ser modelada de forma a permitir essa relação múltipla.
 
 **RN-044 — Leitura pública**  
 Livros e capítulos publicados devem poder ser consultados e lidos por visitantes sem autenticação.
@@ -171,12 +251,16 @@ A lista controlada inicial do MVP será:
 
 Alterações na lista devem ser feitas de forma controlada pela aplicação/administração do projeto.
 
+O `slug` funciona como identificador legível da aplicação, enquanto a identidade relacional interna será mantida por chave primária numérica.
+
 ---
 
 ## 8. Exclusão de conta e conteúdo
 
 **RN-070 — Escolha do autor**  
-A exclusão de uma conta não deve determinar automaticamente a exclusão das obras. O autor deve escolher entre:
+A exclusão de uma conta não deve determinar automaticamente a exclusão das obras.
+
+O autor deve escolher entre:
 
 1. excluir suas obras junto com a conta; ou
 2. preservar suas obras no site.
@@ -191,14 +275,14 @@ Quando o autor optar pela preservação, as obras mantidas devem continuar dispo
 Obras preservadas devem exibir **Autor desconhecido** no lugar do nome do antigo autor.
 
 **RN-074 — Obra não concluída**  
-Se uma obra preservada não estiver marcada como concluída, sua situação deve ser alterada para descontinuada.
+Se uma obra preservada não estiver marcada como concluída, sua situação deve ser alterada para `discontinued`.
 
 **RN-075 — Operação protegida**  
 A exclusão definitiva da identidade de autenticação deve ser executada por mecanismo protegido com os privilégios necessários, sem expor credenciais administrativas no frontend.
 
 ---
 
-## 9. Conteúdo e segurança
+## 9. Conteúdo, validação e segurança
 
 **RN-050 — Fonte da autorização**  
 Ocultar botões no frontend não constitui autorização. As operações devem ser validadas pelo backend/banco.
@@ -210,7 +294,20 @@ Texto fornecido por usuários deve ser tratado como conteúdo não confiável.
 Enquanto o editor do MVP utilizar texto simples, o conteúdo não deve ser interpretado como HTML arbitrário.
 
 **RN-053 — Chaves privilegiadas**  
-Credenciais de administração ou service role não podem ser expostas no código público.
+Credenciais de administração ou `service_role` não podem ser expostas no código público.
+
+**RN-054 — Validação em duas camadas**  
+Toda validação relevante de negócio deve existir:
+
+1. no frontend, para feedback e experiência do usuário;
+2. novamente no banco, para integridade e proteção contra bypass.
+
+A validação do frontend não substitui constraints, RLS, triggers ou outras proteções do banco.
+
+**RN-055 — Proteção da publicação**  
+No MVP, toda tentativa de alterar um livro para `published` deve passar por validação obrigatória no PostgreSQL por trigger.
+
+A trigger deve rejeitar a transição quando os critérios mínimos de publicação não forem atendidos.
 
 ---
 
@@ -229,6 +326,19 @@ A implementação de comentários deverá definir edição, exclusão, moderaç�
 
 **RN-063 — Recomendações**  
 Qualquer mecanismo de recomendação deverá documentar quais sinais utiliza e possuir comportamento aceitável para usuários sem histórico.
+
+**RN-064 — Organização avançada de capítulos**  
+Ficam para evolução pós-MVP:
+
+- reordenar capítulos;
+- inserir capítulos entre capítulos existentes;
+- excluir um capítulo intermediário preservando capítulos posteriores;
+- renumerar ou reorganizar posições.
+
+**RN-065 — Suporte multilíngue completo**  
+Interface para escolha de idiomas, filtros por idioma e demais recursos de internacionalização ficam fora do MVP.
+
+O banco já deve permitir evolução para outros códigos de idioma.
 
 ---
 

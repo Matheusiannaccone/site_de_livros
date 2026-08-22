@@ -27,20 +27,21 @@
 
 | ID | Requisito | Prioridade |
 |---|---|---|
-| RF-010 | O usuário autenticado deve poder criar um livro. | Essencial |
+| RF-010 | O usuário autenticado deve poder criar um livro informando, no mínimo, título e entre 1 e 3 gêneros permitidos. | Essencial |
 | RF-011 | O autor deve poder editar seu próprio livro. | Essencial |
 | RF-012 | O autor deve poder excluir seu próprio livro. | Essencial |
-| RF-013 | O autor deve poder salvar um livro como rascunho. | Essencial |
+| RF-013 | O autor deve poder manter um livro como rascunho sem descrição, capa ou capítulos, desde que os requisitos estruturais mínimos de criação permaneçam válidos. | Essencial |
 | RF-014 | O autor deve poder publicar um livro quando os critérios mínimos de publicação forem atendidos. | Essencial |
 | RF-015 | O autor deve poder definir título e descrição da obra. | Essencial |
 | RF-016 | O autor deve poder associar uma capa opcional ao livro. | Essencial |
-| RF-017 | O autor deve poder associar de 1 a 3 gêneros permitidos ao livro. | Essencial |
+| RF-017 | O autor deve associar de 1 a 3 gêneros permitidos ao livro desde sua criação. | Essencial |
 | RF-018 | O sistema deve exibir somente obras publicadas nas áreas públicas de descoberta. | Essencial |
 | RF-019 | O sistema deve permitir que o autor visualize suas obras em rascunho. | Essencial |
 | RF-019A | Para ser publicado, um livro deve possuir título, descrição, de 1 a 3 gêneros e pelo menos um capítulo publicado. | Essencial |
 | RF-019B | O sistema deve permitir classificar uma obra como em andamento, concluída ou descontinuada, sem confundir essa classificação com seu estado de rascunho/publicação. | Essencial |
 | RF-019C | Quando uma obra for preservada após a exclusão da conta de seu autor, o sistema deve exibir sua autoria como "Autor desconhecido". | Essencial |
 | RF-019D | Quando uma obra não concluída for preservada após a exclusão da conta de seu autor, o sistema deve marcá-la como descontinuada. | Essencial |
+| RF-019E | O sistema não deve concluir a criação de um livro caso ele permaneça sem título ou sem pelo menos um gênero válido. | Essencial |
 
 ## 2.3 Capítulos
 
@@ -48,12 +49,14 @@
 |---|---|---|
 | RF-020 | O autor deve poder criar capítulos em seus próprios livros. | Essencial |
 | RF-021 | O autor deve poder editar capítulos próprios. | Essencial |
-| RF-022 | O autor deve poder excluir capítulos próprios. | Essencial |
+| RF-022 | O autor deve poder excluir capítulos próprios. No MVP, excluir um capítulo intermediário também deve excluir todos os capítulos posteriores da mesma obra. | Essencial |
 | RF-023 | O autor deve poder salvar capítulos como rascunho mesmo que ainda não atendam aos critérios mínimos de publicação. | Essencial |
 | RF-024 | O autor deve poder publicar capítulos que atendam aos critérios mínimos de publicação. | Essencial |
-| RF-025 | O sistema deve ordenar capítulos de uma obra de forma definida. | Essencial |
+| RF-025 | O sistema deve ordenar capítulos de uma obra por uma posição inteira, positiva, contínua e determinística. | Essencial |
 | RF-026 | Capítulos não publicados não devem ser exibidos a outros usuários. | Essencial |
 | RF-027 | Para ser publicado, um capítulo deve possuir título e conteúdo entre 500 e 15.000 caracteres, considerando espaços. | Essencial |
+| RF-028 | Todo novo capítulo deve ser acrescentado ao final da sequência existente da obra. | Essencial |
+| RF-029 | O MVP não deve permitir reordenar capítulos nem inserir um novo capítulo entre capítulos já existentes. | Essencial |
 
 ## 2.4 Descoberta e leitura
 
@@ -97,7 +100,7 @@
 
 | ID | Requisito | Prioridade |
 |---|---|---|
-| RNF-001 | O frontend deve ser desenvolvido com HTML, CSS e JavaScript puro. | Obrigatório |
+| RNF-001 | O frontend deve ser desenvolvido com HTML, CSS e JavaScript puro enquanto essa for a restrição acadêmica vigente. | Obrigatório |
 | RNF-002 | O código deve ser versionado com Git. | Obrigatório |
 | RNF-003 | O repositório deve ser hospedado no GitHub. | Obrigatório |
 | RNF-004 | A aplicação deve ser hospedada na Vercel. | Obrigatório |
@@ -132,9 +135,10 @@
 |---|---|---|
 | RNF-030 | O sistema deve usar PostgreSQL como banco relacional. | Arquitetural |
 | RNF-031 | Relações essenciais devem usar chaves estrangeiras quando aplicável. | Essencial |
-| RNF-032 | Regras de integridade devem ser aplicadas no banco sempre que viável. | Essencial |
+| RNF-032 | Validações relevantes devem existir no frontend para experiência do usuário e ser novamente garantidas no banco de dados por constraints, RLS, triggers ou mecanismos equivalentes quando aplicável. | Essencial |
 | RNF-033 | Consultas frequentes devem poder receber índices conforme necessidade real. | Importante |
 | RNF-034 | O modelo de dados deve permitir preservar uma obra publicada após a remoção do perfil de seu autor sem manter vínculo obrigatório com a conta excluída. | Essencial |
+| RNF-035 | O banco deve impedir estados estruturais inválidos que possam comprometer relações, ordenação ou publicação de conteúdo. | Essencial |
 
 ## 3.5 Manutenção
 
