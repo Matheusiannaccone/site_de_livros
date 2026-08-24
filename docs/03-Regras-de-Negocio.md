@@ -23,6 +23,16 @@ A permissão de alteração de um capítulo deriva da propriedade do livro ao qu
 **RN-005 — Perfil público e privado**  
 Somente dados explicitamente classificados como públicos poderão ser exibidos a outros usuários.
 
+No MVP, os campos aplicacionais existentes em `profiles` serão tratados como públicos:
+
+- `username`;
+- `display_name`;
+- `bio`;
+- `avatar_path`;
+- timestamps de auditoria quando retornados pela consulta.
+
+Dados privados de autenticação, como e-mail e credenciais, não devem ser armazenados em `profiles`.
+
 **RN-006 — Exclusão de conta**  
 Ao solicitar exclusão da própria conta, o usuário deve escolher se deseja excluir também suas obras ou permitir que elas permaneçam disponíveis no sistema.
 
@@ -31,6 +41,9 @@ Quando o autor optar por preservar suas obras após excluir a conta, as obras ma
 
 **RN-008 — Imutabilidade após remoção do autor**  
 Uma obra preservada após exclusão da conta do autor não poderá mais ser editada por esse usuário, pois sua identidade e autorização deixam de existir no sistema.
+
+**RN-009 — Exclusão protegida do perfil**  
+A remoção direta de `profiles` pelo cliente não deve ser disponibilizada como operação comum. A exclusão do perfil deve ocorrer dentro do fluxo protegido de exclusão de conta, após o tratamento do destino das obras e das relações pessoais.
 
 ---
 
@@ -61,6 +74,23 @@ Os gêneros devem ser obtidos de uma coleção/tabela controlada. O usuário nã
 
 **RN-016 — Capa**  
 A capa é opcional. Quando utilizada, deve ser tratada como arquivo associado ao livro. O banco deve armazenar metadados ou referência ao arquivo, não o binário da imagem na tabela principal.
+
+**RN-016A — Formato persistido das imagens**  
+O MVP deve aceitar JPEG, PNG e WebP como formatos de entrada para capas e avatares.
+
+Antes do upload, o frontend deve redimensionar e converter a imagem para WebP.
+
+O Supabase Storage deve persistir somente o arquivo WebP resultante.
+
+**RN-016B — Visibilidade da capa**  
+O bucket de capas será público para leitura no MVP.
+
+A URL direta de uma capa não será tratada como segredo. Uma capa de obra em rascunho poderá ser acessada por quem possuir sua URL direta, mas esse acesso não deve conceder leitura do registro do livro, capítulos privados ou qualquer permissão adicional.
+
+**RN-016C — Propriedade da capa**  
+Somente o autor atual de uma obra poderá enviar, substituir ou excluir a capa associada a ela.
+
+Uma obra preservada com `author_id = NULL` não poderá ter sua capa alterada por usuário comum.
 
 **RN-017 — Validade mínima de criação do livro**  
 Um livro só deve ser considerado criado quando possuir, no mínimo:
@@ -155,7 +185,9 @@ Um capítulo em rascunho deve ser visível para o autor, mas não para leitores 
 Rascunhos podem ser salvos mesmo sem atingir os limites mínimos de publicação.
 
 **RN-023 — Capítulo publicado**  
-Somente capítulos publicados podem ser exibidos no fluxo público de leitura.
+Somente capítulos publicados pertencentes a livros também publicados podem ser exibidos no fluxo público de leitura.
+
+Um capítulo com `status = published` dentro de uma obra com `status = draft` continua privado ao autor.
 
 **RN-024 — Exclusão de livro**  
 A estratégia de exclusão deve garantir que capítulos não permaneçam órfãos.
@@ -204,6 +236,14 @@ Favoritar uma obra não transfere qualquer permissão de edição ao leitor.
 **RN-033 — Favoritos de obra preservada**  
 A preservação de uma obra após exclusão da conta do autor não deve, por si só, remover a obra das bibliotecas dos leitores.
 
+**RN-034 — Privacidade da biblioteca no MVP**  
+A lista de favoritos de um usuário será privada no MVP.
+
+Somente o próprio usuário autenticado poderá consultar, adicionar ou remover registros de `favorites` vinculados ao seu `user_id`.
+
+**RN-035 — Obra elegível para favorito**  
+Somente livros publicados podem ser adicionados aos favoritos no MVP.
+
 ---
 
 ## 6. Descoberta
@@ -225,7 +265,7 @@ Um livro possuirá de 1 a 3 gêneros.
 A associação deve ser modelada de forma a permitir essa relação múltipla.
 
 **RN-044 — Leitura pública**  
-Livros e capítulos publicados devem poder ser consultados e lidos por visitantes sem autenticação.
+Livros e capítulos publicados devem poder ser consultados e lidos por visitantes sem autenticação, respeitando a exigência de que o capítulo pertença a uma obra também publicada.
 
 **RN-045 — Recursos autenticados**  
 Operações pessoais ou autorais, incluindo criação, edição, publicação, exclusão e biblioteca/favoritos, devem exigir autenticação.
@@ -300,14 +340,29 @@ Credenciais de administração ou `service_role` não podem ser expostas no cód
 Toda validação relevante de negócio deve existir:
 
 1. no frontend, para feedback e experiência do usuário;
-2. novamente no banco, para integridade e proteção contra bypass.
+2. novamente no banco ou Storage, para integridade e proteção contra bypass.
 
-A validação do frontend não substitui constraints, RLS, triggers ou outras proteções do banco.
+A validação do frontend não substitui constraints, RLS, policies, triggers ou outras proteções do banco/Storage.
 
 **RN-055 — Proteção da publicação**  
 No MVP, toda tentativa de alterar um livro para `published` deve passar por validação obrigatória no PostgreSQL por trigger.
 
 A trigger deve rejeitar a transição quando os critérios mínimos de publicação não forem atendidos.
+
+**RN-056 — Autorização de Storage**  
+A propriedade dos uploads deve ser validada pelo Supabase Storage e não apenas pela interface.
+
+Para avatares, a autorização deriva do usuário autenticado.
+
+Para capas, a autorização deriva da autoria do livro.
+
+**RN-057 — Limites de imagem do MVP**  
+O arquivo original selecionado pelo usuário terá limite inicial de:
+
+- avatar: 2 MB;
+- capa: 5 MB.
+
+O arquivo WebP persistido deve respeitar os mesmos limites máximos no Storage.
 
 ---
 
