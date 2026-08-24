@@ -2,249 +2,182 @@
 
 ## 1. Objetivo
 
-Definir uma estratégia prática de validação para reduzir regressões durante o desenvolvimento.
+Definir uma estratégia prática de validação e regressão.
 
 O projeto pode iniciar com testes manuais estruturados e evoluir para automação quando houver benefício claro.
 
 ## 2. Tipos de teste
 
-### 2.1 Funcional
+- **Funcional:** requisito funciona.
+- **Autorização:** acesso indevido é bloqueado.
+- **Responsividade:** interface funciona em larguras diferentes.
+- **Integração:** Auth, banco, Storage e frontend funcionam em conjunto.
+- **Regressão:** fluxos essenciais continuam funcionando antes de release.
 
-Verifica se o requisito funciona.
+## 3. Casos mínimos
 
-### 2.2 Autorização
+### Autenticação
 
-Verifica se usuários não conseguem alterar dados de terceiros.
+**T-001 — Cadastro válido**  
+Esperado: identidade e perfil criados conforme fluxo.
 
-### 2.3 Responsividade
+**T-002 — Cadastro inválido**  
+Esperado: não produzir perfil inconsistente.
 
-Verifica comportamento em diferentes larguras.
+**T-003 — Login válido**  
+Esperado: sessão criada.
 
-### 2.4 Integração
+**T-004 — Login inválido**  
+Esperado: erro adequado sem informação sensível.
 
-Verifica fluxos que atravessam Auth, banco, Storage e frontend.
+**T-005 — Logout**  
+Esperado: sessão encerrada e recursos privados indisponíveis.
 
-### 2.5 Regressão
+### Livros
 
-Repete fluxos essenciais antes de releases.
+**T-010 — Criar livro**  
+Esperado: obra válida criada para o usuário autenticado.
 
----
+**T-011 — Editar livro próprio**  
+Esperado: permitido.
 
-# 3. Casos mínimos
+**T-012 — Editar livro alheio**  
+Esperado: negado por RLS.
 
-## Autenticação
+**T-013 — Rascunho não público**  
+Esperado: externo não consegue consultar.
 
-### T-001 — Cadastro válido
+**T-014 — Publicar livro**  
+Esperado: publicação somente quando critérios forem atendidos.
 
-**Pré-condição:** e-mail não cadastrado.  
-**Ação:** preencher dados válidos e cadastrar.  
-**Esperado:** identidade e perfil criados; usuário autenticado ou direcionado conforme fluxo definido.
+**T-015 — Excluir livro próprio**  
+Esperado: dependências tratadas corretamente.
 
-### T-002 — Cadastro inválido
+### Capítulos
 
-**Ação:** enviar dados obrigatórios inválidos/vazios.  
-**Esperado:** operação não deve produzir perfil inconsistente.
+**T-020 — Criar capítulo**  
+Esperado: vínculo correto e posição atribuída conforme regra.
 
-### T-003 — Login válido
+**T-021 — Ordem**  
+Esperado: sequência correta.
 
-**Esperado:** sessão criada e interface autenticada.
+**T-022 — Rascunho de capítulo**  
+Esperado: privado ao autor.
 
-### T-004 — Login inválido
+**T-023 — Publicação de capítulo**  
+Esperado: público apenas quando capítulo e livro forem elegíveis.
 
-**Esperado:** mensagem apropriada sem expor informação sensível desnecessária.
+**T-024 — Navegação anterior/próximo**  
+Esperado: respeita capítulos publicados e ordem.
 
-### T-005 — Logout
+### Biblioteca
 
-**Esperado:** sessão encerrada e recursos privados indisponíveis.
+**T-030 — Favoritar**  
+Esperado: relação criada.
 
----
+**T-031 — Favoritar repetido**  
+Esperado: sem duplicata.
 
-## Livros
+**T-032 — Remover favorito**  
+Esperado: relação removida sem alterar livro.
 
-### T-010 — Criar livro
+### Busca e gêneros
 
-**Usuário:** autenticado.  
-**Esperado:** livro criado como propriedade do usuário.
+**T-040 — Filtrar por gênero**  
+Esperado: somente obras elegíveis relacionadas.
 
-### T-011 — Editar livro próprio
+**T-041 — Busca sem resultado**  
+Esperado: estado vazio, não erro.
 
-**Esperado:** alteração permitida.
+## 4. Matriz de segurança com dois usuários
 
-### T-012 — Editar livro alheio
+| Ação sobre conteúdo de A | Usuário A | Usuário B |
+|---|---:|---:|
+| Ler livro publicado | permitido | permitido |
+| Ler rascunho | permitido | negado |
+| Editar livro | permitido | negado |
+| Excluir livro | permitido | negado |
+| Editar capítulo | permitido | negado |
+| Ler favoritos de A | permitido | negado |
 
-**Cenário:** usuário B tenta atualizar livro do usuário A.  
-**Esperado:** banco/RLS nega a operação.
+Repetir testes afetados quando a Matriz RLS mudar.
 
-### T-013 — Rascunho não público
+Fonte das políticas: `11-Seguranca.md`.
 
-**Esperado:** livro em rascunho não aparece para usuário externo.
-
-### T-014 — Publicar livro
-
-**Esperado:** após requisitos mínimos, obra passa a aparecer nas consultas públicas.
-
-### T-015 — Excluir livro próprio
-
-**Esperado:** exclusão respeita comportamento definido para dependências.
-
----
-
-## Capítulos
-
-### T-020 — Criar capítulo
-
-**Esperado:** capítulo vinculado ao livro correto.
-
-### T-021 — Ordem
-
-**Esperado:** capítulos aparecem pela posição definida.
-
-### T-022 — Rascunho de capítulo
-
-**Esperado:** outro usuário não consegue acessá-lo pelo fluxo público.
-
-### T-023 — Publicação de capítulo
-
-**Esperado:** capítulo publicado passa a ser legível.
-
-### T-024 — Navegação anterior/próximo
-
-**Esperado:** respeita capítulos publicados e ordem correta.
-
----
-
-## Biblioteca
-
-### T-030 — Favoritar
-
-**Esperado:** relação criada uma vez.
-
-### T-031 — Favoritar repetido
-
-**Esperado:** não cria duplicata.
-
-### T-032 — Remover favorito
-
-**Esperado:** relação removida sem alterar o livro.
-
----
-
-## Busca e gêneros
-
-### T-040 — Filtrar por gênero
-
-**Esperado:** retorna apenas livros elegíveis associados ao gênero.
-
-### T-041 — Busca sem resultado
-
-**Esperado:** estado vazio claro, sem erro de interface.
-
----
-
-# 4. Matriz de segurança com dois usuários
-
-Criar pelo menos:
-
-```text
-Usuário A
-Usuário B
-```
-
-Validar:
-
-| Ação | A | B |
-|---|---|---|
-| Ler livro publicado de A | permitido | permitido |
-| Ler rascunho de A | permitido | negado |
-| Editar livro de A | permitido | negado |
-| Excluir livro de A | permitido | negado |
-| Editar capítulo de A | permitido | negado |
-
-Essa matriz deve ser repetida quando políticas RLS mudarem.
-
----
-
-# 5. Responsividade
+## 5. Responsividade
 
 Validar ao menos:
 
-- largura mobile pequena;
+- mobile pequeno;
 - mobile comum;
 - tablet;
 - desktop.
 
 Verificar:
 
-- ausência de scroll horizontal indevido;
+- overflow;
 - navegação;
 - formulários;
 - cards;
-- modal;
 - leitor;
 - botões;
-- textos longos;
-- capas com diferentes proporções.
+- mensagens longas;
+- capas.
 
 ## 6. Navegadores
 
-Quando próximo da entrega, validar pelo menos:
+Próximo da entrega, validar:
 
 - Chrome/Chromium;
 - Firefox;
-- Safari quando houver dispositivo/ambiente disponível.
+- Safari quando houver ambiente disponível.
 
-Registrar limitações reais caso algum navegador não possa ser testado.
+Registrar limitações reais.
 
-## 7. Checklist de regressão para release
+## 7. Checklist de regressão
 
-Antes de uma versão candidata:
+Antes de uma release candidata:
 
 - [ ] cadastro;
 - [ ] login;
 - [ ] logout;
 - [ ] sessão;
 - [ ] perfil;
-- [ ] criar livro;
-- [ ] editar livro;
-- [ ] excluir livro;
-- [ ] publicar livro;
+- [ ] criar/editar/excluir/publicar livro;
 - [ ] upload de capa;
-- [ ] criar capítulo;
-- [ ] editar capítulo;
-- [ ] publicar capítulo;
-- [ ] leitura;
-- [ ] anterior/próximo;
-- [ ] busca;
-- [ ] gênero;
+- [ ] criar/editar/excluir/publicar capítulo;
+- [ ] leitura e navegação;
+- [ ] busca e gênero;
 - [ ] biblioteca;
-- [ ] usuário A não edita dados de B;
-- [ ] mobile;
-- [ ] desktop;
+- [ ] usuário A não altera dados de B;
+- [ ] mobile e desktop;
 - [ ] 404;
-- [ ] console sem erros críticos conhecidos;
-- [ ] documentação compatível com a release.
+- [ ] console sem erro crítico conhecido;
+- [ ] documentação compatível.
+
+O checklist operacional de produção em `12-Deploy-e-Ambientes.md` deve referenciar esta regressão, não duplicá-la.
 
 ## 8. Registro de bugs
 
-Um bug deve conter:
+Registrar:
 
 ```text
 Título
 Versão
 Ambiente
 Pré-condição
-Passos para reproduzir
+Passos
 Resultado atual
 Resultado esperado
 Evidência
 Severidade
 ```
 
-Preferencialmente registrar no GitHub Issues.
+Preferir GitHub Issues.
 
-## 9. Severidade sugerida
+## 9. Severidade
 
-- **Crítica:** perda de dados, falha de segurança, aplicação inutilizável;
+- **Crítica:** perda de dados, falha de segurança ou aplicação inutilizável;
 - **Alta:** fluxo principal quebrado;
 - **Média:** funcionalidade secundária incorreta;
-- **Baixa:** problema visual ou inconveniente sem bloquear uso.
+- **Baixa:** problema visual ou inconveniente não bloqueante.

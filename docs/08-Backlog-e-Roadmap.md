@@ -1,183 +1,128 @@
-# 08 — Backlog e Roadmap
+# 08 — Roadmap
 
 ## 1. Objetivo
 
-Organizar prioridades do produto sem prender o projeto a datas ainda não definidas.
+Registrar a evolução de alto nível do produto.
 
-O acompanhamento diário pode ser feito em GitHub Projects. Este documento representa a visão de alto nível.
+O acompanhamento operacional de tarefas, responsáveis, prazos, criticidade e status é realizado no **Trello**. Este documento não deve duplicar os cartões do quadro.
 
----
+## 2. Roadmap do MVP
 
-# 2. Fase 0 — Fundação
+| Fase | Resultado esperado | Marco sugerido |
+|---|---|---|
+| Fundação | arquitetura, ambientes, segurança e processos definidos | `0.1.x` |
+| Conta e perfil | cadastro, login, logout, sessão e perfil | `0.2.0` |
+| Publicação | livros, capítulos, gêneros, rascunho, publicação e capa | `0.3.0` |
+| Descoberta e leitura | home, detalhes, leitor, busca e navegação | `0.4.0` |
+| Biblioteca | favoritos e biblioteca do usuário | `0.5.0` |
+| Estabilização | requisitos, segurança, responsividade e regressão validados | `1.0.0` |
 
-## Entregáveis
+Os marcos são referências de versionamento, não cronograma rígido.
 
-- [ ] confirmar nome do projeto;
-- [OK] criar repositório GitHub;
-- [ ] definir integrantes e responsabilidades;
-- [ ] configurar Vercel;
-- [OK] criar Trello;
-- [ ] criar projeto Supabase;
-- [OK] criar estrutura inicial de diretórios;
-- [ ] definir design visual inicial;
-- [ ] criar primeira migration/modelo;
-- [ ] configurar autenticação básica;
-- [OK] criar documentação inicial;
-- [ ] definir convenções Git.
+## 3. Fundação
 
-**Saída esperada:** ambiente comum em que todos os integrantes consigam desenvolver.
+Saída esperada:
 
----
+- repositório e fluxo Git funcionando;
+- Vercel e Supabase configurados;
+- modelo de dados aprovado;
+- estratégia RLS/Storage definida;
+- design system inicial;
+- contrato Front ↔ Supabase estabelecido.
 
-# 3. Fase 1 — Conta e perfil
+## 4. Conta e perfil
 
-- [ ] cadastro;
-- [ ] login;
-- [ ] logout;
-- [ ] sessão autenticada;
-- [ ] criação de profile;
-- [ ] visualização de perfil;
-- [ ] edição dos campos permitidos;
-- [ ] tratamento de erros;
-- [ ] políticas RLS relacionadas.
+Saída esperada:
 
-**Marco sugerido de versão:** `0.2.0` quando o conjunto estiver integrado.
+- cadastro;
+- login;
+- logout;
+- sessão;
+- criação e edição de `profiles`;
+- RLS de perfil;
+- tratamento padronizado de estados e erros.
 
----
+## 5. Publicação
 
-# 4. Fase 2 — Publicação
+Saída esperada:
 
-- [ ] tabela/CRUD de livros;
-- [ ] criar livro;
-- [ ] editar livro;
-- [ ] excluir livro;
-- [ ] rascunho;
-- [ ] publicar;
-- [ ] upload de capa;
-- [ ] gêneros;
-- [ ] criar capítulo;
-- [ ] editar capítulo;
-- [ ] excluir capítulo;
-- [ ] ordenar capítulos;
-- [ ] publicar capítulo;
-- [ ] RLS de autoria.
+- CRUD autorizado de livros;
+- gêneros;
+- capítulos;
+- rascunhos;
+- publicação;
+- capa;
+- integridade de ordenação;
+- autorização de autoria.
 
-**Marco sugerido:** `0.3.0`.
+## 6. Descoberta e leitura
 
----
+Saída esperada:
 
-# 5. Fase 3 — Descoberta e leitura
+- catálogo;
+- cards;
+- página de detalhes;
+- lista de capítulos;
+- leitor;
+- anterior/próximo;
+- busca;
+- gênero;
+- revisão mobile first.
 
-- [ ] home com livros publicados;
-- [ ] card de livro;
-- [ ] página de detalhes;
-- [ ] lista de capítulos;
-- [ ] leitor;
-- [ ] anterior/próximo;
-- [ ] busca;
-- [ ] filtro/navegação por gênero;
-- [ ] estados vazios e erros;
-- [ ] revisão mobile first.
+## 7. Biblioteca
 
-**Marco sugerido:** `0.4.0`.
+Saída esperada:
 
----
+- adicionar/remover favorito;
+- biblioteca;
+- estado visual;
+- RLS;
+- testes integrados.
 
-# 6. Fase 4 — Biblioteca
+## 8. Estabilização
 
-- [ ] adicionar favorito;
-- [ ] remover favorito;
-- [ ] página biblioteca;
-- [ ] estado visual de favorito;
-- [ ] RLS da relação;
-- [ ] testes integrados.
+Antes de `1.0.0`:
 
-**Marco sugerido:** `0.5.0`.
+- revisar requisitos;
+- executar regressão;
+- revisar RLS e uploads;
+- validar responsividade e navegadores;
+- revisar acessibilidade mínima;
+- corrigir fluxos quebrados;
+- atualizar documentação;
+- preparar demonstração.
 
----
+Checklist de testes: `10-Testes.md`.  
+Deploy/release: `12-Deploy-e-Ambientes.md`.
 
-# 7. Fase 5 — Estabilização do MVP
+## 9. Pós-MVP
 
-- [ ] revisar requisitos;
-- [ ] corrigir fluxos quebrados;
-- [ ] revisar segurança;
-- [ ] revisar RLS;
-- [ ] revisar uploads;
-- [ ] revisar responsividade;
-- [ ] validar navegadores;
-- [ ] testar conta A vs conta B;
-- [ ] revisar acessibilidade mínima;
-- [ ] limpar código;
-- [ ] atualizar documentação;
-- [ ] preparar dados de demonstração;
-- [ ] gerar release candidata.
+Candidatos:
 
-Quando todos os critérios da entrega estiverem atendidos:
+- página pública completa de autor;
+- histórico e continuar lendo;
+- avaliações/curtidas;
+- comentários;
+- ranking;
+- busca avançada;
+- configurações de leitura;
+- PWA/offline;
+- recomendações;
+- seguidores;
+- notificações;
+- exportação;
+- analytics;
+- moderação;
+- colaboração entre autores.
 
-```text
-1.0.0
-```
+Esses recursos não devem atrasar `1.0.0`.
 
----
+## 10. Definição de pronto
 
-# 8. Pós-MVP — Prioridade média
+Uma tarefa operacional só deve ser considerada concluída quando cumprir os critérios registrados no cartão correspondente do Trello e, quando aplicável:
 
-Itens candidatos:
-
-- [ ] página pública completa de autor;
-- [ ] histórico de leitura;
-- [ ] continuar lendo;
-- [ ] curtidas ou avaliações;
-- [ ] comentários;
-- [ ] ranking/popularidade;
-- [ ] melhorias de busca;
-- [ ] configurações de leitura.
-
-Cada funcionalidade deve entrar como MINOR quando adicionada de forma compatível.
-
----
-
-# 9. Pós-MVP — Exploração
-
-- [ ] PWA;
-- [ ] capítulos offline;
-- [ ] recomendações;
-- [ ] seguidores;
-- [ ] notificações;
-- [ ] exportação de conteúdo;
-- [ ] analytics do autor;
-- [ ] moderação;
-- [ ] colaboração entre autores.
-
-Esses itens não devem atrasar a versão `1.0.0`.
-
----
-
-# 10. Definição de pronto
-
-Uma tarefa só deve ser marcada como concluída quando:
-
-1. código integrado;
-2. comportamento validado;
-3. sem erro conhecido que impeça o fluxo;
-4. responsividade verificada quando aplicável;
-5. segurança/RLS revisada quando tocar dados;
-6. documentação atualizada quando houver mudança arquitetural;
-7. PR revisado quando o fluxo de equipe exigir.
-
----
-
-# 11. Priorização
-
-Ordem padrão:
-
-```text
-1. segurança e integridade
-2. fluxo principal
-3. requisito obrigatório
-4. usabilidade
-5. melhoria
-6. recurso experimental
-```
-
-O grupo deve preferir um MVP completo a uma coleção de funcionalidades parcialmente implementadas.
+- comportamento validado;
+- segurança revisada;
+- responsividade verificada;
+- documentação atualizada;
+- PR revisado conforme `09-Git-e-Versionamento.md`.

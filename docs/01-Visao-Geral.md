@@ -2,7 +2,7 @@
 
 ## 1. Identificação
 
-- **Nome provisório:** Site de Livros
+- **Nome provisório:** e-writter
 - **Tipo:** aplicação web de escrita e leitura
 - **Contexto:** projeto acadêmico em grupo
 - **Equipe:** 5 integrantes
@@ -10,56 +10,50 @@
 - **Plataforma de hospedagem:** Vercel
 
 ## 2. Problema
+Plataformas de publicação digital permitem que autores independentes divulguem histórias e que leitores descubram novos conteúdos.
 
-Plataformas de publicação digital permitem que autores independentes divulguem histórias e que leitores descubram novos conteúdos. O projeto propõe desenvolver uma experiência simplificada desse modelo, adequada ao escopo acadêmico, mas com uma arquitetura capaz de receber novas funcionalidades sem exigir reconstrução completa.
+O projeto propõe uma experiência simplificada desse modelo, adequada ao escopo acadêmico e preparada para evolução incremental.
 
 ## 3. Proposta de solução
 
-Criar uma plataforma web em que uma única conta possa exercer simultaneamente os papéis de leitor e escritor.
+Criar uma plataforma web em que uma única conta possa atuar como leitor e escritor.
 
-Usuários autenticados poderão publicar livros organizados em capítulos. Livros e capítulos publicados poderão ser encontrados e lidos publicamente, sem necessidade de autenticação. A aplicação deverá priorizar navegação simples, boa experiência de leitura e funcionamento adequado em telas pequenas.
-
-Recursos vinculados à identidade do usuário, como publicação, edição, exclusão de conteúdo e biblioteca/favoritos, exigirão autenticação.
+Livros e capítulos publicados poderão ser descobertos e lidos publicamente. Recursos vinculados à identidade do usuário, como publicação, edição, exclusão de conteúdo e biblioteca/favoritos, exigirão autenticação.
 
 ## 4. Inspirações
 
-O conceito de produto utiliza como referência plataformas de publicação e leitura social, como Wattpad, Spirit Fanfics e MangaToon.
+O conceito utiliza como referência plataformas de publicação e leitura social, como Wattpad, Spirit Fanfics e MangaToon.
 
-As referências servem para entendimento de padrões de uso e necessidades do público. O objetivo não é reproduzir integralmente nenhuma plataforma existente.
+As referências servem para entendimento de padrões de uso. O objetivo não é reproduzir integralmente nenhuma plataforma existente.
 
 ## 5. Público-alvo
 
 ### Público primário
 
-- pessoas interessadas em ler histórias publicadas por outros usuários;
-- autores iniciantes ou independentes interessados em publicar textos;
-- usuários que desejem alternar livremente entre leitura e escrita.
+- leitores de histórias publicadas por outros usuários;
+- autores iniciantes ou independentes;
+- usuários que desejem alternar entre leitura e escrita.
 
 ### Público secundário
 
-- leitores que desejem organizar obras favoritas;
-- autores que desejem acompanhar a própria produção;
-- usuários interessados em descoberta de novos gêneros e autores.
+- leitores que organizem obras favoritas;
+- autores que acompanhem a própria produção;
+- usuários interessados em descoberta por gênero ou autor.
 
 ## 6. Objetivo geral
 
-Desenvolver uma aplicação web funcional que permita cadastro, publicação e leitura pública de livros organizados em capítulos, usando HTML, CSS e JavaScript puro no frontend, versionamento Git/GitHub e hospedagem na Vercel.
+Desenvolver uma aplicação web funcional de publicação e leitura de livros organizados em capítulos, usando HTML, CSS e JavaScript puro no frontend, Git/GitHub para versionamento, Supabase como backend e Vercel para hospedagem.
 
 ## 7. Objetivos específicos
 
-- implementar autenticação de usuários;
-- permitir criação e manutenção de perfil;
-- permitir leitura pública de livros e capítulos publicados;
-- permitir criação de livros;
-- permitir criação e edição de capítulos;
-- controlar rascunhos e publicações;
-- apresentar catálogo de livros publicados;
-- permitir consulta de detalhes de uma obra;
-- criar uma experiência de leitura responsiva;
-- implementar categorização por gênero;
-- estruturar a aplicação para recursos sociais e de descoberta;
-- manter controle de acesso sobre conteúdos pertencentes ao usuário;
-- permitir política controlada de preservação ou exclusão das obras quando uma conta for excluída;
+- implementar autenticação e perfil;
+- permitir criação, edição e publicação de livros e capítulos;
+- permitir leitura pública de conteúdo publicado;
+- apresentar catálogo, detalhes da obra e leitor de capítulos;
+- permitir busca básica e navegação por gênero;
+- permitir biblioteca/favoritos para usuários autenticados;
+- proteger conteúdos e operações por autorização adequada;
+- manter experiência mobile first;
 - documentar decisões técnicas e evolução do projeto;
 - aplicar Semantic Versioning.
 
@@ -67,73 +61,48 @@ Desenvolver uma aplicação web funcional que permita cadastro, publicação e l
 
 ### 8.1 Uma conta, dois papéis
 
-Não haverá separação entre conta de leitor e conta de escritor. Todo usuário autenticado poderá publicar conteúdo e utilizar recursos pessoais de leitura. A leitura de livros e capítulos publicados será permitida também para visitantes não autenticados.
+Não haverá separação entre conta de leitor e escritor.
 
 ### 8.2 Mobile first
 
-A experiência será projetada primeiro para telas pequenas. Layouts maiores serão extensões progressivas da interface mobile.
+A experiência será projetada primeiro para telas pequenas.
 
-### 8.3 Conteúdo pertence ao autor
+### 8.3 Conteúdo e autoria
 
-Enquanto a conta do autor estiver ativa, somente ele poderá alterar ou excluir suas próprias obras e capítulos.
+Enquanto houver autoria ativa, somente o autor poderá alterar ou excluir suas próprias obras e capítulos.
 
-Ao solicitar a exclusão da conta, o autor poderá escolher entre excluir suas obras ou permitir que obras preservadas permaneçam disponíveis sem vínculo com sua identidade.
+### 8.4 Publicação, gêneros e continuidade
 
-### 8.4 Publicação controlada
+As regras formais de criação, publicação, categorização, rascunhos e preservação de obras após exclusão da conta estão em `03-Regras-de-Negocio.md`, especialmente nas seções **Livros**, **Capítulos**, **Biblioteca e favoritos** e **Exclusão de conta e conteúdo**.
 
-Livros e capítulos poderão existir como rascunho antes de se tornarem visíveis ao público.
+### 8.5 Evolução incremental
 
-Para publicar um livro, a obra deverá possuir título, descrição, entre 1 e 3 gêneros e pelo menos um capítulo publicado. A capa será opcional.
-
-Para publicar um capítulo, ele deverá possuir título e conteúdo entre 500 e 15.000 caracteres. O limite de tamanho não impede o salvamento de capítulos incompletos como rascunho.
-
-### 8.5 Gêneros controlados
-
-O MVP utilizará uma lista controlada de gêneros. Cada livro deverá possuir pelo menos um e no máximo três gêneros.
-
-### 8.6 Continuidade de obras após exclusão de conta
-
-Ao excluir sua conta, o autor poderá escolher se suas obras também serão excluídas.
-
-Caso opte por preservá-las, as obras mantidas deixarão de estar vinculadas ao perfil removido e deverão exibir a autoria como **Autor desconhecido**.
-
-Se uma obra preservada ainda não estiver marcada como concluída, seu estado de publicação deverá indicar que ela foi **descontinuada**.
-
-### 8.7 Evolução incremental
-
-O MVP deverá estar completo antes de funcionalidades de maior complexidade, como recomendações avançadas, PWA e leitura offline.
+O MVP deve ser concluído antes de funcionalidades evolutivas como recomendações avançadas, PWA, offline e recursos sociais adicionais.
 
 ## 9. Escopo do MVP
 
-O MVP deverá contemplar:
+O MVP contempla:
 
-- cadastro;
-- login e logout;
+- cadastro, login, logout e sessão;
 - perfil básico;
 - leitura pública sem login;
-- catálogo de livros publicados;
-- página de detalhes do livro;
-- criação e edição de livro;
-- upload opcional de capa;
-- criação e edição de capítulos;
-- rascunho e publicação;
-- critérios mínimos de publicação;
-- leitor de capítulos;
-- navegação entre capítulos;
-- lista controlada de gêneros;
-- associação de 1 a 3 gêneros por livro;
+- catálogo e página de detalhes;
+- criação e edição de livros;
+- capa opcional;
+- criação, edição e publicação de capítulos;
+- rascunhos;
+- gêneros controlados;
 - busca básica;
-- biblioteca/favoritos para usuários autenticados;
-- política de exclusão de conta com escolha sobre preservação das obras;
-- identificação de obra preservada sem autor e de obra descontinuada;
+- biblioteca/favoritos;
+- exclusão de conta com tratamento das obras;
 - responsividade mobile first;
-- autorização para edição apenas pelo autor.
+- autorização por autoria.
+
+Requisitos completos: `02-Requisitos.md`.
 
 ## 10. Fora do escopo inicial
 
-Os seguintes recursos não são necessários para considerar o MVP concluído:
-
-- algoritmo personalizado de recomendação;
+- recomendação personalizada;
 - mensagens privadas;
 - monetização;
 - exportação completa para EPUB/PDF;
@@ -141,35 +110,25 @@ Os seguintes recursos não são necessários para considerar o MVP concluído:
 - PWA;
 - notificações push;
 - moderação automatizada;
-- múltiplos autores na mesma obra;
+- múltiplos autores por obra;
 - editor rich text avançado.
 
-Esses itens poderão ser avaliados após a estabilização do MVP.
+O roadmap de evolução está em `08-Backlog-e-Roadmap.md`.
 
 ## 11. Critério de sucesso do MVP
 
-Os fluxos abaixo devem funcionar de ponta a ponta:
+O fluxo principal deve funcionar de ponta a ponta:
 
 ```text
-Usuário A cria conta
-→ cria um livro
+Usuário cria conta
+→ cria obra
 → adiciona capítulos
-→ atende aos critérios de publicação
-→ publica a obra
-→ Visitante encontra o livro sem realizar login
-→ abre a página da obra
-→ inicia a leitura
-→ navega entre os capítulos
+→ publica conteúdo válido
+→ visitante encontra a obra
+→ lê capítulos publicados
+→ navega entre capítulos
 ```
 
-E, para exclusão de conta:
+Também deve funcionar o fluxo de exclusão de conta com exclusão ou preservação das obras, conforme `03-Regras-de-Negocio.md`.
 
-```text
-Autor solicita exclusão da conta
-→ escolhe excluir ou preservar suas obras
-→ sistema aplica a opção escolhida
-→ obras preservadas deixam de identificar o perfil removido
-→ obras não concluídas preservadas são marcadas como descontinuadas
-```
-
-O produto será considerado funcional quando os fluxos principais estiverem estáveis, seguros e utilizáveis em dispositivos móveis.
+O MVP será considerado funcional quando esses fluxos estiverem estáveis, seguros e utilizáveis em dispositivos móveis.

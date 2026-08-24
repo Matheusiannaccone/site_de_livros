@@ -2,18 +2,9 @@
 
 ## 1. Objetivo
 
-Registrar decisões arquiteturais relevantes e suas justificativas.
+Registrar **por que** decisões arquiteturais relevantes foram tomadas.
 
-Formato:
-
-```text
-ADR-XXX
-Status
-Contexto
-Alternativas
-Decisão
-Consequências
-```
+A especificação operacional atual deve permanecer nos documentos especializados. ADRs registram contexto, decisão e consequências sem duplicar toda a especificação.
 
 ---
 
@@ -21,31 +12,11 @@ Consequências
 
 **Status:** Aceito
 
-## Contexto
+**Contexto:** a disciplina exige HTML, CSS e JavaScript puro.
 
-A disciplina exige HTML, CSS e JavaScript puro.
+**Decisão:** utilizar HTML5, CSS3 e JavaScript moderno sem framework.
 
-## Alternativas consideradas
-
-- HTML/CSS/JS puro;
-- frameworks frontend.
-
-## Decisão
-
-Utilizar HTML5, CSS3 e JavaScript moderno sem framework.
-
-## Consequências
-
-**Positivas**
-
-- atende diretamente ao requisito acadêmico;
-- demonstra domínio dos fundamentos web;
-- reduz tooling obrigatório.
-
-**Negativas**
-
-- componentes e estado exigem organização manual;
-- risco maior de duplicação se a arquitetura de módulos não for respeitada.
+**Consequências:** atende ao requisito acadêmico e reduz tooling, mas exige organização manual de componentes e estado.
 
 ---
 
@@ -53,43 +24,13 @@ Utilizar HTML5, CSS3 e JavaScript moderno sem framework.
 
 **Status:** Aceito
 
-## Contexto
+**Contexto:** o domínio possui relações 1:N e N:N frequentes.
 
-A aplicação possui dados com relações frequentes:
+**Alternativas:** Firestore; PostgreSQL via Supabase; PostgreSQL com backend próprio.
 
-- usuários → livros;
-- livros → capítulos;
-- livros ↔ gêneros;
-- usuários ↔ favoritos;
-- futuras relações de comentários, histórico e seguidores.
+**Decisão:** utilizar PostgreSQL via Supabase.
 
-## Alternativas consideradas
-
-1. Firebase + Firestore;
-2. Supabase + PostgreSQL;
-3. PostgreSQL + backend próprio.
-
-## Decisão
-
-Utilizar Supabase + PostgreSQL.
-
-## Justificativa
-
-O domínio possui forte componente relacional, incluindo relações 1:N e N:N. PostgreSQL oferece integridade referencial, joins, constraints, índices e boa flexibilidade para filtros e buscas futuras.
-
-## Consequências
-
-**Positivas**
-
-- modelo mais natural para o domínio;
-- facilidade para consultas compostas;
-- integridade por FKs/constraints;
-- base adequada para Full Text Search futuro.
-
-**Negativas**
-
-- exige que a equipe compreenda SQL e relações;
-- schema precisa de planejamento prévio maior que um CRUD documental simples.
+**Consequências:** modelo relacional natural, FKs e joins; exige domínio básico de SQL e planejamento de schema.
 
 ---
 
@@ -97,63 +38,25 @@ O domínio possui forte componente relacional, incluindo relações 1:N e N:N. P
 
 **Status:** Aceito
 
-## Contexto
+**Contexto:** backend próprio ampliaria infraestrutura fora do foco principal da disciplina.
 
-Usar PostgreSQL próprio com API completa aumentaria a complexidade de backend em uma disciplina cujo requisito obrigatório de implementação está concentrado no frontend.
+**Decisão:** utilizar Supabase para Auth, PostgreSQL, RLS e Storage.
 
-## Alternativas
-
-- Firebase;
-- Supabase;
-- PostgreSQL gerenciado + API própria;
-- servidor próprio.
-
-## Decisão
-
-Utilizar Supabase.
-
-## Justificativa
-
-Fornece PostgreSQL, Auth, Storage e controle via RLS, reduzindo infraestrutura sem remover os benefícios de um banco relacional.
-
-## Consequências
-
-**Positivas**
-
-- menor tempo de infraestrutura;
-- autenticação pronta;
-- storage integrado;
-- PostgreSQL real;
-- autorização próxima aos dados.
-
-**Negativas**
-
-- dependência da plataforma;
-- necessidade de configurar RLS corretamente;
-- equipe precisa distinguir chave pública de chave privilegiada.
+**Consequências:** reduz infraestrutura; cria dependência da plataforma e exige configuração correta de RLS.
 
 ---
 
-# ADR-004 — Autorização por Row Level Security
+# ADR-004 — Autorização por RLS
 
 **Status:** Aceito
 
-## Contexto
+**Contexto:** JavaScript do cliente pode ser modificado.
 
-Qualquer usuário pode manipular o JavaScript executado no próprio navegador.
+**Decisão:** RLS será a camada obrigatória de autorização dos dados expostos.
 
-## Decisão
+**Referência atual:** `11-Seguranca.md`, seção **Matriz de Autorização RLS**.
 
-Usar RLS como camada obrigatória de autorização para operações em dados expostos.
-
-A implementação do MVP deve seguir a Matriz RLS versionada registrada em `11-Seguranca.md`.
-
-## Consequências
-
-- botões escondidos deixam de ser considerados proteção;
-- políticas precisam ser testadas com usuários diferentes;
-- novas tabelas não podem entrar em produção sem revisão de acesso;
-- mudanças futuras na baseline de autorização devem gerar versão `1.X` da matriz.
+**Consequências:** UI não é barreira de segurança; policies precisam ser testadas com usuários distintos.
 
 ---
 
@@ -161,19 +64,9 @@ A implementação do MVP deve seguir a Matriz RLS versionada registrada em `11-S
 
 **Status:** Aceito / obrigatório
 
-## Contexto
+**Decisão:** utilizar Vercel para produção e previews quando aplicável.
 
-A disciplina exige hospedagem na Vercel.
-
-## Decisão
-
-Utilizar Vercel para produção e previews quando aplicável.
-
-## Consequências
-
-- integração natural com GitHub;
-- frontend estático simples de publicar;
-- Vercel Functions permanecem disponíveis para necessidades server-side futuras.
+**Consequências:** integração simples com GitHub e possibilidade de funções server-side futuras.
 
 ---
 
@@ -181,19 +74,9 @@ Utilizar Vercel para produção e previews quando aplicável.
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** CSS base parte de mobile e amplia com `min-width`.
 
-O produto será utilizado para leitura e descoberta em telas pequenas e o grupo definiu mobile first como requisito do projeto.
-
-## Decisão
-
-CSS base será desenvolvido para mobile; media queries com `min-width` ampliarão a experiência.
-
-## Consequências
-
-- componentes precisam ser pensados primeiro para toque;
-- desktop não deve ser a referência inicial de layout;
-- revisão de PR visual deve incluir viewport mobile.
+**Consequências:** componentes devem ser projetados primeiro para telas pequenas e toque.
 
 ---
 
@@ -201,19 +84,11 @@ CSS base será desenvolvido para mobile; media queries com `min-width` ampliarã
 
 **Status:** Aceito
 
-## Contexto
+**Contexto:** separar tipos de conta criaria barreira sem benefício para o MVP.
 
-Separar usuários por tipo criaria barreira e complexidade sem benefício para o conceito do produto.
+**Decisão:** toda conta autenticada pode ler recursos pessoais e publicar conteúdo; leitura pública de conteúdo publicado não exige login.
 
-## Decisão
-
-Todo usuário autenticado pode publicar e utilizar recursos pessoais de leitura. A leitura pública de conteúdo publicado não exige autenticação, conforme ADR-013.
-
-## Consequências
-
-- não existe `tipo_usuario` apenas para distinguir leitor/escritor;
-- a existência de livros publicados representa atividade de autoria;
-- permissões são baseadas em propriedade do conteúdo.
+**Consequências:** autorização se baseia em propriedade, não em `tipo_usuario`.
 
 ---
 
@@ -221,19 +96,9 @@ Todo usuário autenticado pode publicar e utilizar recursos pessoais de leitura.
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** capítulos utilizam texto simples no MVP.
 
-Editor rich text aumenta complexidade de sanitização, armazenamento e consistência.
-
-## Decisão
-
-O MVP prioriza entrada de texto simples para capítulos.
-
-## Consequências
-
-- implementação mais segura e previsível;
-- formatação avançada fica para evolução;
-- conteúdo deve ser exibido como texto, preservando estrutura necessária sem interpretar HTML arbitrário.
+**Consequências:** implementação e sanitização mais simples; rich text fica para evolução.
 
 ---
 
@@ -241,48 +106,21 @@ O MVP prioriza entrada de texto simples para capítulos.
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** usar tabela `favorites` com relação usuário ↔ livro.
 
-Usuários podem favoritar múltiplos livros e um livro pode ser favoritado por múltiplos usuários.
+A biblioteca é privada e apenas livros publicados podem ser adicionados.
 
-## Decisão
-
-Modelar favoritos por tabela associativa `favorites`.
-
-No MVP, a biblioteca será privada: somente o próprio usuário poderá consultar e gerenciar seus favoritos.
-
-Somente livros publicados serão elegíveis para inserção em `favorites`.
-
-## Consequências
-
-- integridade relacional;
-- prevenção de duplicata por chave composta/constraint;
-- consulta simples da biblioteca de um usuário;
-- favoritos não se tornam um recurso social público no MVP;
-- RLS deve impedir leitura ou alteração de favoritos de terceiros.
+**Referências:** `05-Modelo-de-Dados.md` e `11-Seguranca.md`.
 
 ---
 
-# ADR-010 — Leitura offline como evolução, não requisito inicial
+# ADR-010 — Offline como evolução
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** leitura offline/PWA não bloqueia o MVP.
 
-A ideia de leitura offline é relevante, mas depende de decisões adicionais sobre cache, atualização e escopo.
-
-## Decisão
-
-Não bloquear o MVP por implementação offline.
-
-## Direção futura
-
-Avaliar PWA/Service Worker e armazenamento local de capítulos selecionados antes de exportação de PDF/EPUB.
-
-## Consequências
-
-- equipe prioriza fluxo principal;
-- arquitetura de leitura deve evitar decisões que inviabilizem cache futuro.
+**Consequências:** priorização do fluxo principal; solução futura pode considerar Service Worker/cache.
 
 ---
 
@@ -290,27 +128,9 @@ Avaliar PWA/Service Worker e armazenamento local de capítulos selecionados ante
 
 **Status:** Aceito / obrigatório
 
-## Decisão
+**Decisão:** usar `MAJOR.MINOR.PATCH`; desenvolvimento em `0.x.y`; primeiro MVP estável em `1.0.0`.
 
-Usar:
-
-```text
-MAJOR.MINOR.PATCH
-```
-
-Durante desenvolvimento:
-
-```text
-0.x.y
-```
-
-Primeira versão completa da entrega:
-
-```text
-1.0.0
-```
-
-Detalhes em `09-Git-e-Versionamento.md`.
+**Referência:** `09-Git-e-Versionamento.md`.
 
 ---
 
@@ -318,19 +138,9 @@ Detalhes em `09-Git-e-Versionamento.md`.
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** cliente acessa Supabase dentro das permissões RLS. Funções server-side entram apenas para segredo, privilégio ou processamento protegido.
 
-A Vercel permite funções server-side, mas adicioná-las sem necessidade aumenta complexidade.
-
-## Decisão
-
-O MVP acessará Supabase através do SDK no navegador dentro das permissões RLS. Vercel Functions serão adicionadas apenas para operações que exijam segredo, processamento protegido ou lógica inadequada ao cliente.
-
-## Consequências
-
-- menor infraestrutura inicial;
-- possibilidade de evolução sem mudança obrigatória de hospedagem;
-- exclusão definitiva da identidade de autenticação é um caso válido para operação server-side protegida.
+**Consequências:** menor infraestrutura inicial; exclusão definitiva da identidade é exemplo de operação protegida válida.
 
 ---
 
@@ -338,40 +148,11 @@ O MVP acessará Supabase através do SDK no navegador dentro das permissões RLS
 
 **Status:** Aceito
 
-## Contexto
+**Alternativas:** leitura autenticada; leitura pública de conteúdo publicado.
 
-Exigir autenticação para leitura aumentaria a barreira de entrada sem benefício necessário para o fluxo principal do MVP.
+**Decisão:** catálogo, detalhes e capítulos publicados são públicos.
 
-## Alternativas consideradas
-
-- leitura somente autenticada;
-- leitura pública de conteúdo publicado.
-
-## Decisão
-
-Permitir que visitantes não autenticados:
-
-- acessem o catálogo;
-- pesquisem e filtrem obras;
-- abram páginas de livros publicados;
-- leiam capítulos publicados pertencentes a livros também publicados.
-
-Autenticação permanece obrigatória para operações pessoais e autorais, como publicar, editar, excluir e favoritar.
-
-## Consequências
-
-**Positivas**
-
-- menor barreira para descoberta e leitura;
-- demonstração mais simples do fluxo principal;
-- separação clara entre conteúdo público e operações vinculadas à identidade.
-
-**Técnicas**
-
-- políticas RLS devem permitir `SELECT` anônimo somente para conteúdo publicado;
-- capítulo publicado de livro em rascunho continua privado;
-- rascunhos permanecem restritos ao autor;
-- favoritos continuam restritos a usuários autenticados e ao próprio proprietário.
+**Consequências:** menor barreira para leitura; RLS deve separar conteúdo público de rascunhos e ações pessoais.
 
 ---
 
@@ -379,49 +160,11 @@ Autenticação permanece obrigatória para operações pessoais e autorais, como
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** livros e capítulos possuem critérios mínimos antes da publicação, mas rascunhos podem permanecer incompletos.
 
-Permitir a publicação de obras ou capítulos incompletos geraria itens públicos sem conteúdo suficiente para leitura.
+**Especificação vigente:** `03-Regras-de-Negocio.md`, RN-019C e RN-026.
 
-Ao mesmo tempo, critérios obrigatórios não devem impedir o salvamento de rascunhos em andamento.
-
-## Decisão
-
-### Livro
-
-Para publicar um livro, exigir:
-
-- título;
-- descrição;
-- entre 1 e 3 gêneros;
-- pelo menos 1 capítulo publicado.
-
-A capa será opcional.
-
-### Capítulo
-
-Para publicar um capítulo, exigir:
-
-- título;
-- conteúdo entre 500 e 15.000 caracteres, considerando espaços.
-
-O título não entra na contagem de caracteres.
-
-Rascunhos poderão ser salvos sem cumprir todos esses critérios.
-
-## Consequências
-
-**Positivas**
-
-- catálogo evita obras publicadas sem conteúdo legível;
-- autores continuam podendo salvar trabalho incompleto;
-- critérios são verificáveis por testes.
-
-**Técnicas**
-
-- validações devem ocorrer no fluxo de publicação;
-- não convém representar todos os critérios como `NOT NULL` permanentes, pois rascunhos incompletos são permitidos;
-- o banco e/ou a camada de aplicação devem impedir transições inválidas para `published`.
+**Consequências:** critérios de publicação não devem ser transformados indiscriminadamente em `NOT NULL` permanentes.
 
 ---
 
@@ -429,98 +172,27 @@ Rascunhos poderão ser salvos sem cumprir todos esses critérios.
 
 **Status:** Aceito
 
-## Contexto
+**Decisão:** lista controlada de gêneros e limite de 1 a 3 por obra.
 
-Permitir gêneros criados livremente pelos usuários aumentaria inconsistência de nomes e dificultaria filtros no MVP.
+**Especificação vigente:** `05-Modelo-de-Dados.md`, seção **genres**.
 
-O modelo relacional já prevê associação N:N entre livros e gêneros.
-
-## Decisão
-
-Utilizar lista controlada inicial com 12 gêneros:
-
-1. Ação;
-2. Aventura;
-3. Comédia;
-4. Drama;
-5. Fantasia;
-6. Ficção Científica;
-7. Mistério;
-8. Romance;
-9. Suspense;
-10. Terror;
-11. Ficção Histórica;
-12. Fanfic.
-
-Cada livro deverá possuir no mínimo 1 e no máximo 3 gêneros desde sua criação.
-
-Usuários comuns terão somente leitura de `genres`.
-
-## Consequências
-
-- filtros possuem valores consistentes;
-- `genres` permanece uma tabela controlada;
-- `book_genres` mantém a relação N:N;
-- é necessário validar mínimo e máximo de associações por livro;
-- alteração administrativa da lista não fica exposta ao cliente comum.
+**Consequências:** filtros consistentes; escrita de `genres` não fica disponível a usuários comuns.
 
 ---
 
-# ADR-016 — Exclusão de conta com escolha sobre preservação das obras
+# ADR-016 — Exclusão de conta com escolha sobre obras
 
 **Status:** Aceito
 
-## Contexto
+**Alternativas:** sempre excluir; sempre preservar; permitir escolha.
 
-Excluir automaticamente todas as obras junto com a conta poderia remover histórias que leitores ainda desejam acessar.
+**Decisão:** usuário escolhe excluir ou preservar.
 
-Por outro lado, preservar obras vinculadas a um perfil excluído manteria uma relação inválida entre conteúdo e identidade inexistente.
+Obras preservadas perdem o vínculo com o perfil, exibem **Autor desconhecido** e, se não concluídas, tornam-se `discontinued`.
 
-O grupo decidiu permitir que o próprio autor escolha o destino de suas obras ao excluir a conta.
+**Referências:** `03-Regras-de-Negocio.md` e `05-Modelo-de-Dados.md`.
 
-## Alternativas consideradas
-
-1. sempre excluir as obras;
-2. sempre preservar as obras;
-3. permitir escolha entre exclusão e preservação.
-
-## Decisão
-
-Ao excluir a conta, o autor deverá escolher entre:
-
-### Excluir as obras
-
-As obras e seus conteúdos dependentes serão removidos de forma consistente.
-
-### Preservar as obras
-
-As obras mantidas:
-
-- continuarão disponíveis de acordo com seu estado de publicação;
-- deixarão de estar vinculadas ao perfil excluído;
-- serão exibidas com autoria **Autor desconhecido**;
-- não poderão mais ser editadas pelo antigo autor;
-- quando não estiverem concluídas, serão marcadas como **descontinuadas**.
-
-## Consequências
-
-**Modelo de dados**
-
-- `books.author_id` precisa admitir ausência de autor após preservação;
-- a FK entre `books.author_id` e `profiles.id` não deve utilizar cascade que apague automaticamente as obras;
-- `ON DELETE SET NULL` é a direção recomendada para essa relação;
-- `publication_status` deve distinguir `ongoing`, `completed` e `discontinued`.
-
-**Segurança**
-
-- uma obra sem autor vinculado continua legível quando publicada, mas não pode ser alterada por usuários comuns;
-- nenhum usuário pode assumir uma obra com `author_id = NULL`;
-- a exclusão da identidade de autenticação deve ocorrer por operação protegida, sem service role no frontend.
-
-**Experiência**
-
-- a interface deve informar claramente **Autor desconhecido**;
-- obras não concluídas preservadas devem exibir estado **Descontinuada**.
+**Consequências:** `books.author_id` admite `NULL`; relação com profile usa estratégia compatível com preservação.
 
 ---
 
@@ -528,247 +200,53 @@ As obras mantidas:
 
 **Status:** Aceito
 
-**Substitui parcialmente:** ADR-014 e ADR-015 quanto ao momento em que título e gêneros passam a ser obrigatórios.
+**Refina:** ADR-014 e ADR-015.
 
-## Contexto
+**Decisão:** livro nasce com autor, título e 1–3 gêneros. Descrição, capa e capítulos podem ser adicionados depois.
 
-O modelo anterior permitia interpretar que título e gêneros poderiam estar ausentes enquanto o livro permanecesse em rascunho.
-
-Durante a revisão do modelo conceitual, foi identificado que um livro precisa existir como entidade antes que seus capítulos possam ser criados.
-
-Permitir registros sem identidade mínima produziria rascunhos estruturalmente inválidos e dificultaria a organização das obras pelo próprio autor.
-
-## Alternativas consideradas
-
-1. permitir livro quase vazio e exigir campos somente na publicação;
-2. exigir todos os campos já na criação;
-3. exigir identidade mínima na criação e permitir complementação durante o rascunho.
-
-## Decisão
-
-Adotar a terceira alternativa.
-
-Um livro só será criado quando possuir:
-
-- autor válido;
-- título;
-- entre 1 e 3 gêneros.
-
-O sistema deverá aplicar defaults:
-
-```text
-status = draft
-publication_status = ongoing
-language = pt-BR
-```
-
-Poderão permanecer ausentes no rascunho:
-
-- descrição;
-- capa;
-- capítulos;
-- `published_at`.
-
-A criação do livro e das associações obrigatórias de gênero deverá ser tratada como uma operação lógica atômica.
-
-## Consequências
-
-**Positivas**
-
-- não existem livros sem identidade mínima;
-- lista de rascunhos permanece compreensível;
-- simplifica parte das verificações posteriores;
-- gênero passa a ser característica estrutural da obra.
-
-**Técnicas**
-
-- `books.title` deverá ser obrigatório;
-- não pode permanecer livro persistido sem registro correspondente em `book_genres`;
-- mínimo e máximo de gêneros devem ser garantidos no frontend e no banco.
+**Consequências:** rascunhos podem estar incompletos, mas nunca estruturalmente inválidos.
 
 ---
 
-# ADR-018 — Estados controlados com text + CHECK
+# ADR-018 — Estados com `text + CHECK`
 
 **Status:** Aceito
 
-## Contexto
+**Alternativas:** enum PostgreSQL; `text` com `CHECK`.
 
-Os campos:
+**Decisão:** usar `text` + `CHECK` para estados controlados.
 
-```text
-books.status
-chapters.status
-books.publication_status
-```
-
-possuem conjuntos pequenos e controlados de valores.
-
-Foram consideradas duas formas principais de representação no PostgreSQL:
-
-1. enums;
-2. `text` com `CHECK`.
-
-## Alternativas consideradas
-
-### Enum PostgreSQL
-
-Vantagens:
-
-- domínio fortemente tipado;
-- valores permitidos definidos no próprio tipo.
-
-Desvantagens:
-
-- evolução do conjunto exige alteração do tipo;
-- adiciona tipos extras às migrations;
-- maior complexidade para o estágio atual do projeto.
-
-### `text` + `CHECK`
-
-Vantagens:
-
-- impede valores inválidos;
-- migrations mais simples;
-- conjunto de valores pode evoluir com menor complexidade.
-
-## Decisão
-
-Utilizar `text` com constraints `CHECK`.
-
-Para estado editorial:
-
-```text
-draft
-published
-```
-
-Para situação narrativa:
-
-```text
-ongoing
-completed
-discontinued
-```
-
-## Consequências
-
-- valores inválidos continuam bloqueados pelo banco;
-- não serão criados enums PostgreSQL no MVP;
-- alterações futuras serão feitas por migration da constraint correspondente.
+**Consequências:** integridade com migrations mais simples de evoluir.
 
 ---
 
-# ADR-019 — Idioma padrão pt-BR sem domínio fechado
+# ADR-019 — Idioma padrão `pt-BR` sem domínio fechado
 
 **Status:** Aceito
 
-## Contexto
-
-O modelo possui `books.language`, mas o MVP não terá interface completa de internacionalização.
-
-Era necessário definir um valor padrão sem impedir evolução futura para outros idiomas.
-
-## Alternativas consideradas
-
-1. remover o campo no MVP;
-2. limitar o campo exclusivamente a `pt-BR`;
-3. usar `text` com default `pt-BR` sem `CHECK` fechado.
-
-## Decisão
-
-Utilizar:
+**Decisão:**
 
 ```text
 language text NOT NULL DEFAULT 'pt-BR'
 ```
 
-Não limitar os idiomas permitidos por `CHECK` no MVP.
+Sem `CHECK` fechado para idiomas.
 
-## Consequências
-
-**Positivas**
-
-- obras atuais recebem idioma automaticamente;
-- suporte futuro a `en-US`, `de-DE`, `es-ES` e outros códigos não exige alteração estrutural da coluna.
-
-**Escopo**
-
-Interface de escolha de idioma, filtros e internacionalização completa permanecem pós-MVP.
+**Consequências:** suporte futuro a outros códigos sem alterar o tipo da coluna.
 
 ---
 
-# ADR-020 — Validação obrigatória no frontend e no banco
+# ADR-020 — Validação no frontend e na camada persistente
 
 **Status:** Aceito
 
 **Refina:** ADR-004 e ADR-014.
 
-## Contexto
+**Decisão:** frontend valida para UX; banco/Storage validam para integridade e segurança.
 
-Uma aplicação client-side não pode considerar o JavaScript executado no navegador como barreira de segurança.
+**Referência:** `11-Seguranca.md`, seção **Validação e proteção no banco**.
 
-Ao mesmo tempo, validações apenas no banco produzem experiência de usuário inferior.
-
-## Alternativas consideradas
-
-1. validar somente no frontend;
-2. validar somente no banco;
-3. validar em ambas as camadas.
-
-## Decisão
-
-Toda validação relevante de negócio deverá existir:
-
-```text
-Frontend
-+
-Banco de dados / Storage
-```
-
-O frontend será responsável por:
-
-- feedback imediato;
-- mensagens claras;
-- evitar requisições sabidamente inválidas.
-
-O banco e o Storage serão responsáveis por:
-
-- integridade;
-- autorização;
-- proteção contra chamadas diretas à API;
-- impedir estados ou uploads inválidos mesmo quando o frontend for ignorado.
-
-## Publicação no MVP
-
-A transição:
-
-```text
-draft → published
-```
-
-de um livro será protegida por trigger PostgreSQL.
-
-A trigger deverá validar os critérios mínimos antes de aceitar a alteração.
-
-## Consequências
-
-- chamadas diretas à API não contornam critérios de publicação;
-- chamadas diretas ao Storage não contornam propriedade de upload;
-- testes precisam cobrir frontend, banco e Storage;
-- regras críticas não podem existir apenas como validação de formulário.
-
-## Evolução futura
-
-Avaliar função/RPC:
-
-```text
-publish_book(book_id)
-```
-
-como operação explícita de publicação.
-
-No MVP, a função não será necessária.
+**Consequências:** chamadas diretas à API não podem contornar regras críticas.
 
 ---
 
@@ -776,237 +254,39 @@ No MVP, a função não será necessária.
 
 **Status:** Aceito
 
-## Contexto
+**Alternativas:** reordenação completa; posições espaçadas; sequência contínua.
 
-Reordenação de capítulos, inserção intermediária e renumeração adicionariam complexidade desnecessária ao fluxo inicial de escrita.
+**Decisão:** posições contínuas, novos capítulos ao final, sem reordenação. Exclusão intermediária remove posteriores.
 
-O MVP necessita apenas de leitura sequencial e criação progressiva dos capítulos.
+**Especificação:** `03-Regras-de-Negocio.md`, seção **Capítulos**.
 
-## Alternativas consideradas
-
-1. permitir reordenação completa;
-2. utilizar posições espaçadas para facilitar inserções futuras;
-3. utilizar sequência inteira contínua e imutável no MVP.
-
-## Decisão
-
-Utilizar:
-
-```text
-1, 2, 3, 4, ...
-```
-
-Todo capítulo novo será criado no final.
-
-Sua posição será atribuída pelo banco:
-
-```text
-MAX(position) + 1
-```
-
-Para o primeiro capítulo:
-
-```text
-position = 1
-```
-
-Constraints:
-
-```text
-CHECK(position > 0)
-UNIQUE(book_id, position)
-```
-
-No MVP não será permitido:
-
-- reordenar capítulos;
-- inserir capítulo entre existentes;
-- escolher posição manualmente.
-
-## Exclusão
-
-Se um capítulo intermediário for excluído, todos os capítulos posteriores também serão removidos.
-
-Exemplo:
-
-```text
-1 2 3 4 5 6 7 8 9 10
-```
-
-Excluir `7`:
-
-```text
-1 2 3 4 5 6
-```
-
-## Consequências
-
-**Positivas**
-
-- sequência permanece contínua;
-- não é necessária renumeração;
-- navegação anterior/próximo é simples;
-- menor complexidade no MVP.
-
-**Negativas**
-
-- autor não pode reorganizar obra já escrita;
-- exclusão intermediária é destrutiva para capítulos posteriores.
-
-## Evolução futura
-
-Avaliar:
-
-- reordenação;
-- inserção entre capítulos;
-- exclusão intermediária preservando posteriores;
-- estratégia de renumeração.
+**Consequências:** implementação simples; reorganização avançada fica pós-MVP.
 
 ---
 
-# ADR-022 — Identidade numérica para gêneros e slug legível
+# ADR-022 — ID numérico e slug para gêneros
 
 **Status:** Aceito
 
-**Refina:** ADR-015.
+**Alternativas:** UUID; slug como PK; inteiro + slug.
 
-## Contexto
+**Decisão:** `genres.id` inteiro como PK e `slug` `UNIQUE` para uso legível.
 
-A tabela `genres` representa uma lista pequena, controlada e administrada pelo projeto.
-
-Foi necessário decidir entre:
-
-- UUID;
-- ID inteiro;
-- `slug` como chave primária.
-
-## Alternativas consideradas
-
-### UUID
-
-Uniformizaria IDs com outras entidades, mas adicionaria complexidade sem ganho relevante para uma tabela pequena e controlada.
-
-### Slug como PK
-
-Seria legível, porém faria alterações futuras de nomenclatura afetarem a identidade referencial do gênero.
-
-### ID inteiro + slug UNIQUE
-
-Separa identidade interna do banco da identidade legível utilizada pela aplicação.
-
-## Decisão
-
-Utilizar:
-
-```text
-genres.id
-→ integer
-→ PRIMARY KEY
-
-genres.name
-→ text
-→ UNIQUE
-
-genres.slug
-→ text
-→ UNIQUE
-```
-
-`book_genres.genre_id` deverá referenciar `genres.id`.
-
-O frontend poderá utilizar `slug` para:
-
-- filtros;
-- identificação legível;
-- URLs futuras.
-
-## Consequências
-
-**Positivas**
-
-- FKs pequenas e simples;
-- alterações de slug não exigem alteração da PK;
-- frontend mantém identificador humano;
-- banco mantém identidade interna estável.
+**Consequências:** identidade interna estável e URLs/filtros legíveis.
 
 ---
 
-# ADR-023 — Matriz RLS 1.0 como baseline do MVP
+# ADR-023 — Matriz RLS 1.0
 
 **Status:** Aceito
 
-**Refina:** ADR-004, ADR-009, ADR-013, ADR-015 e ADR-016.
+**Contexto:** era necessário consolidar permissões por tabela antes das migrations.
 
-## Contexto
+**Decisão:** adotar a Matriz RLS 1.0.
 
-As regras anteriores definiam a necessidade de RLS, mas ainda não consolidavam uma matriz completa de leitura, criação, edição e exclusão por tabela.
+**Especificação oficial:** `11-Seguranca.md`, seção **Matriz de Autorização RLS**.
 
-A equipe precisa de uma baseline estável antes de implementar as migrations.
-
-## Decisão
-
-Adotar a **Matriz RLS 1.0** documentada em `11-Seguranca.md`.
-
-Resumo:
-
-```text
-profiles
-SELECT público
-INSERT/UPDATE próprio usuário
-DELETE direto negado
-
-books
-SELECT published público ou próprias obras
-INSERT/UPDATE/DELETE somente autor
-
-chapters
-SELECT público apenas quando chapter e book estão published
-escrita somente autor do livro
-
-genres
-SELECT público
-escrita comum negada
-
-book_genres
-leitura conforme visibilidade do livro
-INSERT/DELETE somente autor
-UPDATE negado no MVP
-
-favorites
-privados ao próprio usuário
-INSERT somente para livro published
-UPDATE não utilizado
-DELETE somente próprio usuário
-```
-
-Obras com `author_id = NULL` não podem ser assumidas ou modificadas por usuários comuns.
-
-## Versionamento
-
-A baseline inicial é:
-
-```text
-1.0
-```
-
-Mudanças futuras devem utilizar:
-
-```text
-1.1
-1.2
-1.3
-...
-```
-
-Cada mudança deverá registrar escopo e justificativa.
-
-## Consequências
-
-- migrations possuem contrato de autorização explícito;
-- testes podem ser organizados por operação e identidade;
-- rascunhos de terceiros permanecem protegidos;
-- favoritos deixam de ter privacidade ambígua;
-- evolução da política passa a ter histórico versionado.
+**Consequências:** autorização passa a ter baseline versionada e testes associados.
 
 ---
 
@@ -1014,149 +294,27 @@ Cada mudança deverá registrar escopo e justificativa.
 
 **Status:** Aceito
 
-## Contexto
+**Alternativas:** privados; públicos sem controle adequado; públicos com mutation protegida.
 
-Capas e avatares precisam ser exibidos com frequência em páginas públicas.
+**Decisão:** `avatars` e `covers` são públicos para leitura; escrita depende de propriedade.
 
-Manter todos os arquivos privados exigiria geração e gerenciamento de URLs assinadas sem necessidade funcional equivalente no MVP.
+**Especificação:** `11-Seguranca.md`, seção **Storage**.
 
-Por outro lado, escrita não pode depender do frontend.
-
-## Alternativas consideradas
-
-1. buckets privados;
-2. buckets públicos sem controle suficiente de escrita;
-3. buckets públicos para leitura com policies de propriedade para mutações.
-
-## Decisão
-
-Adotar a terceira alternativa.
-
-Buckets:
-
-```text
-avatars
-covers
-```
-
-Ambos serão públicos para leitura.
-
-Paths:
-
-```text
-avatars/{user_id}/avatar.webp
-covers/{book_id}/cover.webp
-```
-
-Autorização:
-
-```text
-avatar
-→ auth.uid() = user_id do path
-
-capa
-→ book_id do path
-→ books.author_id = auth.uid()
-```
-
-## Capas de rascunho
-
-A URL de uma capa não será tratada como segredo.
-
-Se alguém obtiver a URL direta de uma capa de rascunho, poderá visualizar apenas o arquivo da imagem.
-
-Isso não concede acesso ao registro `books`, capítulos privados ou permissões adicionais.
-
-## Consequências
-
-**Positivas**
-
-- entrega simples de imagens públicas;
-- ausência de signed URLs para o fluxo comum;
-- autorização de escrita continua no Storage;
-- paths possuem propriedade previsível.
-
-**Limitação aceita**
-
-- capa de rascunho não possui confidencialidade absoluta enquanto armazenada no bucket público.
+**Consequências:** assets públicos simples de servir; capa de rascunho não possui confidencialidade absoluta.
 
 ---
 
-# ADR-025 — Conversão client-side para WebP antes do upload
+# ADR-025 — Conversão client-side para WebP
 
 **Status:** Aceito
 
-## Contexto
+**Alternativas:** transformação dinâmica; processamento server-side; conversão no cliente.
 
-Imagens de capas e avatares podem ser enviadas em formatos e dimensões maiores que o necessário para uso web.
+**Decisão:** aceitar JPEG/PNG/WebP, converter no cliente e persistir WebP.
 
-Foram consideradas transformações dinâmicas no momento da leitura, processamento server-side e otimização antes do upload.
+**Especificação:** `11-Seguranca.md`, seção **Uploads**.
 
-## Alternativas consideradas
-
-1. armazenar original e transformar dinamicamente ao servir;
-2. processar em função server-side antes de salvar;
-3. redimensionar e converter no navegador antes do upload.
-
-## Decisão
-
-Adotar a terceira alternativa no MVP.
-
-Entrada aceita:
-
-```text
-JPEG
-PNG
-WebP
-```
-
-Persistência:
-
-```text
-WebP
-```
-
-Fluxo:
-
-```text
-arquivo
-↓
-validação
-↓
-redimensionamento
-↓
-conversão WebP no cliente
-↓
-upload
-```
-
-Limites iniciais:
-
-```text
-avatar: 2 MB
-capa: 5 MB
-```
-
-O Storage também deverá aplicar limites e policies compatíveis quando tecnicamente possível.
-
-A conversão client-side é otimização e UX; não é mecanismo de segurança.
-
-## Consequências
-
-**Positivas**
-
-- arquivos persistidos padronizados;
-- menor armazenamento e tráfego;
-- não exige processamento dinâmico no MVP;
-- não exige função server-side apenas para conversão simples.
-
-**Limitações**
-
-- o cliente pode ser modificado ou ignorado;
-- tipo, tamanho, path e propriedade precisam continuar protegidos no Storage;
-- variantes adicionais de tamanho poderão exigir estratégia futura.
-
----
+**Consequências:** padronização e menor tráfego sem função server-side; Storage ainda precisa validar propriedade e limites.
 
 ---
 
@@ -1164,117 +322,29 @@ A conversão client-side é otimização e UX; não é mecanismo de segurança.
 
 **Status:** Aceito
 
-## Contexto
+**Contexto:** frontend e integração precisam avançar em paralelo.
 
-Frontend e integração com Supabase serão desenvolvidos em paralelo por membros diferentes da equipe.
+**Alternativas:** páginas acessarem Supabase; mocks por página; services estáveis com adapters.
 
-Se páginas consumirem diretamente respostas brutas do Supabase, alterações de query, join, nomenclatura ou integração poderão obrigar a reescrita da interface.
+**Decisão:** usar service → adapter mock/Supabase.
 
-## Alternativas consideradas
+**Especificação:** `14-Contrato-Front-Supabase.md`.
 
-1. páginas chamarem Supabase diretamente;
-2. cada página definir seu próprio formato de mock;
-3. services com contratos estáveis e adapters intercambiáveis.
-
-## Decisão
-
-Adotar a terceira alternativa.
-
-```text
-page
-  ↓
-service
-  ↓
-adapter
-  ├── mock
-  └── supabase
-```
-
-A baseline será:
-
-```text
-Contrato Front ↔ Supabase 1.0
-```
-
-Detalhes em `14-Contrato-Front-Supabase.md`.
-
-Banco/Supabase utiliza `snake_case`; objetos entregues à aplicação usam `camelCase`.
-
-Resposta padrão:
-
-```js
-{
-  data: ...,
-  error: null
-}
-```
-
-Erro:
-
-```js
-{
-  data: null,
-  error: {
-    code: "ERROR_CODE",
-    message: "Mensagem adequada à aplicação."
-  }
-}
-```
-
-Lista vazia:
-
-```js
-{
-  data: [],
-  error: null
-}
-```
-
-## Consequências
-
-- interface pode avançar com mocks;
-- troca para Supabase não exige reestruturação das páginas;
-- detalhes de query ficam isolados;
-- erros técnicos são normalizados;
-- mocks precisam permanecer sincronizados com o contrato.
+**Consequências:** mock pode ser substituído sem reestruturar páginas.
 
 ---
 
-# ADR-027 — Services como única fronteira de acesso a dados no frontend
+# ADR-027 — Services como fronteira de acesso a dados
 
 **Status:** Aceito
 
-**Refina:** ADR-001, ADR-003, ADR-012 e ADR-026.
+**Refina:** ADR-026.
 
-## Decisão
+**Decisão:** `pages/` e `components/` não chamam diretamente `supabase.from`, Auth ou Storage.
 
-Arquivos de `pages/` e `components/` não devem realizar chamadas diretas a:
+**Referência:** `04-Arquitetura.md` e `14-Contrato-Front-Supabase.md`.
 
-```text
-supabase.from()
-supabase.auth
-supabase.storage
-```
-
-Essas operações ficam encapsuladas em `js/services/` e seus adapters.
-
-Services previstos:
-
-```text
-profileService
-bookService
-chapterService
-genreService
-favoriteService
-imageService
-```
-
-## Consequências
-
-- páginas coordenam UI e estados;
-- componentes permanecem reutilizáveis;
-- services concentram integração;
-- adapters podem evoluir sem alterar a estrutura das páginas.
+**Consequências:** UI fica desacoplada da implementação de persistência.
 
 ---
 
@@ -1284,60 +354,31 @@ imageService
 
 **Refina:** ADR-026.
 
-## Decisão
+**Decisão:** mocks reproduzem o contrato dos services, não o schema bruto do PostgreSQL.
 
-Mocks devem reproduzir exatamente:
+**Referência:** `14-Contrato-Front-Supabase.md`, seção **Mocks**.
 
-- nomes de propriedades;
-- tipos;
-- nulabilidade;
-- objetos aninhados;
-- listas;
-- formato de sucesso;
-- formato de vazio;
-- códigos de erro
+**Consequências:** UI pode testar sucesso, vazio e erros antes da integração real.
 
-definidos no Contrato Front ↔ Supabase 1.0.
-
-Mocks simulam a resposta dos services, não o schema físico do PostgreSQL.
-
-Estados mínimos:
-
-```text
-sucesso
-vazio
-erro
-não autenticado
-não autorizado
-não encontrado
-```
-
-quando aplicável.
-
-## Consequências
-
-- UI pode ser validada antes da integração;
-- casos vazios e de erro não dependem de falhas reais;
-- mocks se tornam ferramenta de desenvolvimento e teste.
-
+---
 
 # 2. Decisões pendentes
 
-Registrar novos ADRs quando forem definidas:
+Criar novos ADRs quando forem fechadas decisões sobre:
 
-- nome final e identidade visual;
-- mecanismo de avaliação/curtida;
-- comentários e moderação;
-- estratégia de Full Text Search;
+- nome e identidade visual;
+- avaliação/curtida;
+- comentários/moderação;
+- Full Text Search;
 - PWA/offline;
-- experiência completa de múltiplos idiomas;
-- estratégia avançada de reorganização de capítulos;
-- eventual adoção de função/RPC explícita de publicação;
-- eventual adoção de buckets privados para novos tipos de arquivo;
-- eventual estratégia de variantes de imagem.
+- experiência multilíngue;
+- reorganização avançada de capítulos;
+- RPC explícita de publicação;
+- novos tipos de Storage privado;
+- variantes de imagem.
 
 ## 3. Regra de manutenção
 
 ADR aceito não deve ser apagado quando uma decisão mudar.
 
-Criar novo ADR indicando que substitui ou refina o anterior, preservando histórico técnico.
+Criar novo ADR indicando qual decisão substitui ou refina, preservando histórico.

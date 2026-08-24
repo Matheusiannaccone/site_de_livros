@@ -32,7 +32,7 @@ Valores iniciais:
 @media (min-width: 1024px) {}
 ```
 
-Breakpoints podem ser ajustados quando o layout real exigir. Não devem ser criados apenas para dispositivos específicos.
+Breakpoints podem ser ajustados quando o layout real exigir.
 
 ## 4. Tokens CSS
 
@@ -67,7 +67,7 @@ Os valores visuais devem ser aprovados pelo grupo antes de serem tratados como i
 
 ## 5. Tipografia
 
-Devem existir papéis claros:
+Devem existir papéis claros para:
 
 - título de página;
 - título de seção;
@@ -78,7 +78,7 @@ Devem existir papéis claros:
 - legenda;
 - mensagem de estado.
 
-O texto de capítulos pode utilizar uma família ou configuração distinta da interface, desde que legível.
+O texto dos capítulos pode utilizar configuração distinta da interface, desde que priorize legibilidade.
 
 ## 6. Grid de livros
 
@@ -90,35 +90,33 @@ Preferência inicial:
 2 cards por linha quando houver largura suficiente.
 ```
 
-Em telas muito estreitas, o comportamento deve permanecer legível sem overflow.
+Em telas muito estreitas, o layout deve permanecer legível sem overflow.
 
 ### Tablet/Desktop
 
-Aumentar a quantidade de colunas conforme largura disponível, preservando tamanho mínimo dos cards.
+Aumentar colunas conforme largura disponível, preservando tamanho mínimo dos cards.
 
 ## 7. Componentes obrigatórios
 
 ### Botões
 
-Variantes previstas:
-
 - primário;
 - secundário;
 - textual;
 - destrutivo;
-- estado desabilitado;
-- estado carregando.
+- desabilitado;
+- carregando.
 
 ### Inputs
 
-- label sempre identificável;
-- mensagem de erro próxima ao campo;
+- label identificável;
+- erro próximo ao campo;
 - foco visível;
 - placeholder não substitui label.
 
 ### Card de livro
 
-Deve suportar, no mínimo:
+Deve suportar:
 
 - capa;
 - título;
@@ -127,7 +125,7 @@ Deve suportar, no mínimo:
 
 ### Navegação
 
-Deve possuir solução específica para mobile, sem depender de hover.
+Deve possuir solução específica para mobile e não depender de hover.
 
 ### Feedback
 
@@ -141,14 +139,14 @@ Padrões para:
 
 ## 8. Leitor
 
-A página de leitura deve priorizar:
+Priorizar:
 
 - largura de linha confortável;
-- bom espaçamento entre linhas;
-- contraste adequado;
-- tamanho de fonte legível;
-- navegação anterior/próximo;
-- ausência de elementos desnecessários durante a leitura.
+- bom espaçamento;
+- contraste;
+- tamanho legível;
+- anterior/próximo;
+- baixa distração.
 
 Recursos futuros:
 
@@ -159,28 +157,28 @@ Recursos futuros:
 
 ## 9. Acessibilidade mínima
 
-- usar HTML semântico;
-- associar labels a inputs;
-- fornecer `alt` apropriado em imagens informativas;
-- não transmitir informação somente por cor;
-- manter foco de teclado visível;
-- evitar contraste insuficiente;
-- botões devem ser elementos interativos corretos;
-- garantir tamanho de toque adequado em mobile;
-- respeitar hierarquia de headings.
+- HTML semântico;
+- labels associados a inputs;
+- `alt` em imagens informativas;
+- informação não transmitida somente por cor;
+- foco visível;
+- contraste adequado;
+- elementos interativos corretos;
+- áreas de toque adequadas;
+- hierarquia de headings.
 
 ## 10. Imagens
 
 Capas devem:
 
-- manter proporção consistente nos cards;
+- manter proporção consistente;
 - usar `object-fit` apropriado;
-- possuir fallback visual se não houver capa;
-- evitar carregar arquivos desnecessariamente grandes.
+- possuir fallback visual;
+- evitar arquivos desnecessariamente grandes.
+
+Regras técnicas de upload: `11-Seguranca.md`.
 
 ## 11. Responsividade
-
-A ordem de trabalho é:
 
 ```text
 1. implementar mobile
@@ -189,13 +187,11 @@ A ordem de trabalho é:
 4. expandir para desktop
 ```
 
-Não implementar desktop primeiro e tentar corrigir mobile apenas com media query ao final.
-
 ## 12. Critério para novos componentes
 
-Antes de criar um componente visual novo:
+Antes de criar componente novo:
 
 1. verificar se já existe equivalente;
 2. reutilizar tokens;
 3. manter estados de foco/erro/desabilitado;
-4. documentar padrão se ele for reutilizado em mais de uma área.
+4. documentar quando o padrão for reutilizável.
