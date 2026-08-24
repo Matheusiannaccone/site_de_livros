@@ -2,78 +2,68 @@
 
 ## 1. Objetivo
 
-Definir controles mínimos de segurança para uma aplicação em que usuários autenticados criam e publicam conteúdo.
+Definir a política de autorização, proteção de dados e Storage do MVP.
 
-Este documento não substitui revisão das políticas, constraints, triggers e regras de Storage reais antes de deploy.
+Este documento é a fonte oficial da **Matriz RLS vigente** e das regras de segurança de uploads.
+
+Regras de produto: `03-Regras-de-Negocio.md`.  
+Schema e constraints: `05-Modelo-de-Dados.md`.  
+Casos de teste: `10-Testes.md`.
 
 ---
 
-## 2. Modelo de ameaça simplificado
+## 2. Modelo de ameaça
 
 Considerar que um usuário pode:
 
-- alterar JavaScript no navegador;
-- chamar diretamente a API;
-- modificar IDs enviados;
-- tentar alterar diretamente campos como `status`;
-- tentar ler rascunhos de terceiros;
-- tentar alterar livros de terceiros;
-- tentar criar associações inválidas;
-- enviar conteúdo inesperado;
-- tentar executar ações destrutivas fora do fluxo previsto;
-- tentar fazer upload de arquivo indevido;
-- tentar gravar arquivos em caminhos pertencentes a outros usuários ou livros.
+- modificar JavaScript;
+- chamar a API diretamente;
+- alterar IDs e payloads;
+- tentar ler rascunhos;
+- tentar editar conteúdo alheio;
+- tentar manipular estados;
+- enviar arquivos inesperados;
+- tentar gravar em paths de terceiros.
 
-Consequentemente, a segurança e a integridade não podem depender da interface.
+Consequência:
 
----
-
-## 3. Autenticação
-
-Responsabilidade do Supabase Auth.
-
-O frontend pode usar os valores públicos necessários para inicializar o SDK, mas não deve conter credenciais administrativas.
+> segurança e integridade não podem depender da interface.
 
 ---
 
-## 4. Chaves e configuração
+## 3. Autenticação e chaves
+
+Supabase Auth gerencia identidade.
 
 ### Permitido no cliente
-
-Valores projetados para serem públicos, com RLS e políticas de Storage corretamente configuradas:
 
 ```text
 SUPABASE_URL
 SUPABASE_PUBLISHABLE_KEY
 ```
 
-A chave pública destinada ao cliente não substitui autorização.
-
-### Proibido no frontend e no repositório
+### Proibido no frontend/repositório
 
 - `service_role`;
 - secret keys;
-- credenciais de banco;
 - senha do PostgreSQL;
 - connection strings privilegiadas;
-- segredos de serviços externos;
-- tokens administrativos.
+- tokens administrativos;
+- segredos de serviços externos.
 
-Segredos server-side devem permanecer em variáveis de ambiente protegidas.
+Segredos server-side ficam em ambiente protegido.
 
 ---
 
-# 5. Matriz de Autorização RLS
+# 4. Matriz de Autorização RLS
 
-## 5.1 Versão
+## 4.1 Versão
 
 ```text
 Matriz RLS: 1.0
 ```
 
-A versão `1.0` representa a baseline de autorização aprovada para o MVP.
-
-Alterações futuras deverão seguir a sequência:
+Mudanças futuras:
 
 ```text
 1.1
@@ -82,201 +72,136 @@ Alterações futuras deverão seguir a sequência:
 ...
 ```
 
-Cada alteração deverá registrar:
+A versão atual é a referência principal.
 
-- o que mudou;
-- por que mudou;
-- quais tabelas/policies foram afetadas;
-- quais testes precisam ser revisados.
+O histórico textual completo permanece no Git. Neste documento, manter apenas um changelog resumido:
 
-A versão mais recente deve ser a principal referência. A versão anterior da secção alterada deve ser mantida como `revised` após as matriz principal seguindo o padrão:
+| Versão | Mudança | Referência |
+|---|---|---|
+| 1.0 | baseline inicial | ADR-023 |
 
-```text
-v1.X - trecho modificado
-motivo da alteração
-```
+## 4.2 Princípios
 
-## 5.2 Princípios
+1. leitura pública somente quando explícita;
+2. rascunhos privados ao autor;
+3. UUID/URL não concedem autorização;
+4. capítulos herdam autorização do livro;
+5. `book_genres` herda autorização do livro;
+6. favoritos pertencem ao próprio usuário;
+7. `genres` é tabela controlada;
+8. obra com `author_id = NULL` não pode ser assumida;
+9. RLS define quem acessa linhas; constraints/triggers definem integridade;
+10. frontend não é autoridade.
 
-A Matriz RLS 1.0 segue estes princípios:
-
-1. leitura pública somente quando explicitamente permitida;
-2. rascunhos permanecem privados ao autor;
-3. conhecer UUID, URL ou identificador não concede autorização;
-4. capítulos herdam autorização do livro ao qual pertencem;
-5. associações de gênero herdam autorização do livro;
-6. favoritos pertencem exclusivamente ao usuário que os criou;
-7. tabelas controladas não podem ser alteradas por usuários comuns;
-8. obras preservadas com `author_id = NULL` não podem ser assumidas por outro usuário;
-9. RLS responde quem pode acessar uma linha, enquanto constraints, triggers e funções respondem regras estruturais adicionais;
-10. nenhuma regra crítica depende apenas do frontend.
-
-## 5.3 Matriz principal
+## 4.3 Matriz principal
 
 | Tabela | `SELECT` | `INSERT` | `UPDATE` | `DELETE` |
 |---|---|---|---|---|
-| `profiles` | Público | Usuário autenticado, somente `id = auth.uid()` | Somente o próprio usuário | Negado diretamente ao usuário; exclusão ocorre pelo fluxo protegido de conta |
-| `books` | Público se `status = 'published'`; autor lê todas as próprias obras | Autenticado, somente com `author_id = auth.uid()` | Somente autor atual da obra | Somente autor atual da obra |
-| `chapters` | Público somente se capítulo e livro estiverem `published`; autor lê todos os capítulos das próprias obras | Somente autor do livro | Somente autor do livro | Somente autor do livro, respeitando exclusão sequencial |
-| `genres` | Público | Negado ao usuário comum | Negado ao usuário comum | Negado ao usuário comum |
-| `book_genres` | Público quando livro estiver publicado; autor lê associações das próprias obras | Somente autor do livro | Negado no MVP | Somente autor do livro |
-| `favorites` | Somente o próprio usuário | Somente o próprio usuário | Não utilizado no MVP | Somente o próprio usuário |
+| `profiles` | Público | próprio usuário | próprio usuário | negado diretamente |
+| `books` | publicados ou próprias obras | autor autenticado | autor | autor |
+| `chapters` | público somente se capítulo e livro publicados; autor vê próprios | autor do livro | autor do livro | autor do livro |
+| `genres` | Público | negado | negado | negado |
+| `book_genres` | publicado ou autor da obra | autor do livro | negado | autor do livro |
+| `favorites` | próprio usuário | próprio usuário, livro publicado | negado | próprio usuário |
 
 ---
 
-## 6. Política RLS por tabela
+# 5. Políticas por tabela
 
-### 6.1 `profiles`
+## 5.1 `profiles`
 
-Os campos existentes no MVP são considerados públicos:
-
-- `username`;
-- `display_name`;
-- `bio`;
-- `avatar_path`;
-- `created_at`;
-- `updated_at`.
-
-Nenhum e-mail, credencial ou dado privado de autenticação deve ser armazenado em `profiles`.
-
-#### `SELECT`
+### Leitura
 
 ```text
 público
 ```
 
-A leitura pública é necessária para exibir dados básicos de autoria.
+Os campos do MVP são públicos:
 
-#### `INSERT`
+- `username`;
+- `display_name`;
+- `bio`;
+- `avatar_path`;
+- timestamps.
 
-Permitido somente quando:
+Dados privados de autenticação não pertencem a `profiles`.
+
+### Criação
 
 ```text
 auth.uid() IS NOT NULL
-AND
-profiles.id = auth.uid()
+AND id = auth.uid()
 ```
 
-Um usuário não pode criar perfil para outro UUID.
-
-#### `UPDATE`
-
-Permitido somente quando:
+### Atualização
 
 ```text
-profiles.id = auth.uid()
+id = auth.uid()
 ```
 
-#### `DELETE`
+A policy deve manter o vínculo com o próprio usuário.
 
-```text
-DELETE direto pelo cliente → NEGADO
-```
+### Exclusão
 
-A exclusão de `profiles` deve ocorrer apenas dentro do fluxo protegido de exclusão de conta, que precisa tratar previamente:
+Não expor `DELETE` direto ao cliente.
 
-- destino das obras;
-- favoritos;
-- autoria preservada ou removida;
-- exclusão do perfil;
-- exclusão da identidade no provedor de autenticação.
+A exclusão ocorre pelo fluxo protegido de conta definido em `03-Regras-de-Negocio.md`, seção **Exclusão de conta e conteúdo**.
 
----
+## 5.2 `books`
 
-### 6.2 `books`
-
-#### `SELECT`
-
-Permitido quando:
+### Leitura
 
 ```text
 status = 'published'
-```
-
-ou quando:
-
-```text
+OR
 author_id = auth.uid()
 ```
 
-Comportamento esperado:
+Consequências:
 
-| Situação | Visitante | Outro usuário | Autor |
-|---|---:|---:|---:|
-| Livro publicado | Sim | Sim | Sim |
-| Livro em rascunho | Não | Não | Sim |
-| Livro preservado publicado (`author_id = NULL`) | Sim | Sim | Leitura pública |
-| Livro preservado em rascunho | Não | Não | Não |
+| Situação | Público | Autor |
+|---|---:|---:|
+| publicado | sim | sim |
+| draft | não | sim |
+| publicado com `author_id = NULL` | sim | leitura pública |
+| draft com `author_id = NULL` | não | não |
 
-#### `INSERT`
-
-Permitido somente quando:
+### Criação
 
 ```text
 auth.uid() IS NOT NULL
-AND
-author_id = auth.uid()
+AND author_id = auth.uid()
 ```
 
-O cliente não pode criar obra em nome de outro usuário.
+### Atualização
 
-#### `UPDATE`
+```text
+USING author_id = auth.uid()
+WITH CHECK author_id = auth.uid()
+```
 
-Permitido somente quando:
+Isso impede transferência de autoria ou uso comum de `UPDATE` para definir `author_id = NULL`.
+
+### Exclusão
 
 ```text
 author_id = auth.uid()
 ```
 
-A política deve impedir que o autor use um `UPDATE` comum para:
+Obras órfãs de autor são imutáveis para usuários comuns.
 
-- transferir autoria para outro usuário;
-- definir `author_id = NULL`;
-- assumir uma obra preservada.
+## 5.3 `chapters`
 
-A alteração para `author_id = NULL` fica reservada ao fluxo protegido de exclusão de conta.
-
-#### `DELETE`
-
-Permitido somente quando:
-
-```text
-author_id = auth.uid()
-```
-
-Livros com:
-
-```text
-author_id IS NULL
-```
-
-não podem ser alterados ou excluídos por usuários comuns.
-
-Critérios de criação e publicação não dependem apenas da RLS.
-
----
-
-### 6.3 `chapters`
-
-A autorização de capítulos deriva do livro.
-
-Fluxo conceitual:
+A propriedade deriva do livro:
 
 ```text
 chapter.book_id
-        ↓
-books.id
-        ↓
-books.author_id
-        ↓
-auth.uid()
+→ books.id
+→ books.author_id
+→ auth.uid()
 ```
 
-O capítulo não precisa duplicar `author_id`.
-
-#### `SELECT` público
-
-Somente quando:
+### Leitura pública
 
 ```text
 chapters.status = 'published'
@@ -284,366 +209,146 @@ AND
 books.status = 'published'
 ```
 
-O estado abaixo não torna o capítulo público:
+O autor pode ler todos os capítulos das próprias obras.
+
+### Escrita
+
+`INSERT`, `UPDATE` e `DELETE` exigem autoria do livro pai.
+
+RLS não deve ser usada para substituir regras estruturais de posição e exclusão sequencial. Essas regras ficam em `03-Regras-de-Negocio.md` e `05-Modelo-de-Dados.md`.
+
+## 5.4 `genres`
 
 ```text
-Livro: draft
-Capítulo: published
+SELECT → público
+INSERT → negado
+UPDATE → negado
+DELETE → negado
 ```
 
-O autor pode ler todos os capítulos das próprias obras quando:
+Seeds e alterações são administrativos/migration.
+
+## 5.5 `book_genres`
+
+Autorização deriva de `books.author_id`.
 
 ```text
-books.author_id = auth.uid()
-```
+SELECT
+→ livro publicado OU autor da obra
 
-#### `INSERT`
-
-Somente quando:
-
-```text
-books.id = chapters.book_id
-AND
-books.author_id = auth.uid()
-```
-
-#### `UPDATE`
-
-Somente o autor do livro pode alterar.
-
-No MVP, o usuário não pode utilizar `UPDATE` para:
-
-- alterar `book_id` arbitrariamente;
-- escolher `position`;
-- reordenar capítulos;
-- inserir capítulo entre posições existentes.
-
-Essas regras devem ser garantidas também por mecanismos de banco apropriados.
-
-#### `DELETE`
-
-Somente o autor do livro pode iniciar a exclusão.
-
-A exclusão sequencial do MVP deve remover:
-
-```text
-position >= N
-```
-
-para o mesmo `book_id`.
-
-A RLS define quem pode excluir; o mecanismo de banco define quais capítulos devem ser removidos.
-
----
-
-### 6.4 `genres`
-
-Tabela controlada pelo projeto.
-
-#### `SELECT`
-
-```text
-público
-```
-
-Necessário para:
-
-- criação e edição de obras;
-- catálogo;
-- filtros;
-- página de detalhes.
-
-#### Escrita
-
-Para usuários comuns:
-
-```text
-INSERT → NEGADO
-UPDATE → NEGADO
-DELETE → NEGADO
-```
-
-A lista inicial de gêneros deve ser criada e alterada por migration ou operação administrativa controlada.
-
----
-
-### 6.5 `book_genres`
-
-A autorização deriva do livro.
-
-Fluxo conceitual:
-
-```text
-book_genres.book_id
-        ↓
-books.author_id
-        ↓
-auth.uid()
-```
-
-#### `SELECT`
-
-Permitido quando:
-
-```text
-books.status = 'published'
-```
-
-ou:
-
-```text
-books.author_id = auth.uid()
-```
-
-Isso impede que a tabela associativa revele metadados de rascunhos alheios.
-
-#### `INSERT`
-
-Permitido somente quando o usuário for autor do livro.
-
-O `genre_id` deve referenciar um gênero válido da tabela controlada.
-
-#### `UPDATE`
-
-```text
-NEGADO no MVP
-```
-
-A associação utiliza PK composta:
-
-```text
-(book_id, genre_id)
-```
-
-Uma troca de gênero deve ocorrer por:
-
-```text
-DELETE associação antiga
-+
-INSERT associação nova
-```
-
-#### `DELETE`
-
-Permitido somente ao autor do livro.
-
-A regra:
-
-```text
-1 <= quantidade_de_generos <= 3
-```
-
-não é responsabilidade exclusiva da RLS e deve ser protegida também por mecanismo de integridade no banco.
-
----
-
-### 6.6 `favorites`
-
-A biblioteca/favoritos será privada no MVP.
-
-#### `SELECT`
-
-Permitido somente quando:
-
-```text
-user_id = auth.uid()
-```
-
-Visitantes não veem favoritos.
-
-Usuário A não vê favoritos de B.
-
-#### `INSERT`
-
-Permitido somente quando:
-
-```text
-user_id = auth.uid()
-```
-
-A obra favoritada deve estar publicada:
-
-```text
-books.status = 'published'
-```
-
-A PK composta:
-
-```text
-PRIMARY KEY (user_id, book_id)
-```
-
-impede duplicação.
-
-#### `UPDATE`
-
-```text
-não utilizado no MVP
-```
-
-Favorito possui comportamento binário:
-
-```text
-não existe
-↓
 INSERT
-↓
-favoritado
-↓
+→ autor da obra
+
+UPDATE
+→ negado no MVP
+
 DELETE
-↓
-não favoritado
+→ autor da obra
 ```
 
-#### `DELETE`
+Troca de gênero ocorre por remover + inserir associação.
 
-Permitido somente quando:
+A quantidade de 1 a 3 gêneros é integridade de domínio/banco, não responsabilidade exclusiva da RLS.
+
+## 5.6 `favorites`
+
+Biblioteca privada no MVP.
 
 ```text
+SELECT → user_id = auth.uid()
+
+INSERT →
 user_id = auth.uid()
+E livro relacionado com status = 'published'
+
+UPDATE → negado
+
+DELETE → user_id = auth.uid()
 ```
 
----
-
-# 7. Invariantes da RLS 1.0
-
-Independentemente da implementação SQL futura:
-
-1. visitante nunca lê rascunho de livro;
-2. visitante nunca lê capítulo se o capítulo não estiver publicado;
-3. visitante nunca lê capítulo se o livro pai não estiver publicado;
-4. usuário nunca altera livro de terceiro;
-5. usuário nunca altera capítulo de livro de terceiro;
-6. usuário nunca altera associação de gênero de livro de terceiro;
-7. usuário nunca consulta ou altera favoritos de terceiro;
-8. usuário comum nunca modifica `genres`;
-9. obra com `author_id = NULL` nunca pode ser assumida por outro usuário;
-10. conhecer UUID não concede autorização;
-11. modificar JavaScript não contorna nenhuma regra anterior;
-12. regras estruturais adicionais continuam protegidas por constraints, triggers ou funções adequadas.
+A PK composta impede duplicação.
 
 ---
 
-# 8. Storage
+# 6. Invariantes da RLS 1.0
 
-## 8.1 Buckets previstos
+1. visitante não lê livro em draft;
+2. visitante não lê capítulo sem capítulo e livro publicados;
+3. usuário não altera livro de terceiro;
+4. usuário não altera capítulo de terceiro;
+5. usuário não altera gêneros de obra de terceiro;
+6. usuário não lê/altera favoritos de terceiro;
+7. usuário comum não modifica `genres`;
+8. obra com `author_id = NULL` não é assumida;
+9. conhecer UUID ou URL não concede autorização;
+10. modificar frontend não contorna as regras anteriores.
+
+---
+
+# 7. Storage
+
+## 7.1 Buckets
 
 ```text
-covers
 avatars
+covers
 ```
 
-Ambos serão públicos para leitura no MVP.
+Ambos são públicos para leitura no MVP.
 
-A URL de uma imagem não será tratada como segredo.
+A URL de um asset não é segredo.
 
-A leitura pública do arquivo não concede acesso adicional a registros protegidos por RLS.
+## 7.2 Matriz de Storage
 
-## 8.2 Matriz de Storage 1.0
+| Bucket | Leitura | Upload/replace/delete |
+|---|---|---|
+| `avatars` | pública | proprietário |
+| `covers` | pública | autor do livro |
 
-| Bucket | Leitura | Upload | Substituição | Exclusão |
-|---|---|---|---|---|
-| `avatars` | Pública | Somente proprietário | Somente proprietário | Somente proprietário |
-| `covers` | Pública | Somente autor do livro | Somente autor do livro | Somente autor do livro |
-
----
-
-## 8.3 Avatares
-
-Estrutura prevista:
+## 7.3 Paths
 
 ```text
 avatars/{user_id}/avatar.webp
+covers/{book_id}/cover.webp
 ```
 
-Exemplo:
+### Avatar
 
-```text
-avatars/
-└── {uuid-do-usuario}/
-    └── avatar.webp
-```
+Mutação permitida apenas quando o `user_id` do path corresponde a `auth.uid()`.
+
+### Capa
 
 Mutação permitida apenas quando:
 
 ```text
-auth.uid() = user_id representado pelo caminho
+book_id do path
+→ books.id
+→ books.author_id
+→ auth.uid()
 ```
 
-Consequentemente:
+Com `author_id = NULL`, nenhum usuário comum pode alterar a capa.
 
-```text
-Usuário A → avatars/A/avatar.webp → permitido
-Usuário A → avatars/B/avatar.webp → negado
-```
+## 7.4 Capas de rascunho
 
-A leitura será pública porque o avatar integra o perfil público.
+Como `covers` é público, quem conhecer a URL direta pode visualizar a imagem, inclusive se estiver associada a rascunho.
+
+Isso não concede:
+
+- acesso ao registro privado;
+- acesso a capítulos privados;
+- permissão de edição;
+- bypass de RLS.
+
+UUIDs reduzem descoberta acidental, mas não são controle de autorização.
 
 ---
 
-## 8.4 Capas
+# 8. Uploads
 
-Estrutura prevista:
+## 8.1 Entrada e persistência
 
-```text
-covers/{book_id}/cover.webp
-```
-
-Para upload, substituição ou exclusão:
-
-```text
-book_id do caminho
-        ↓
-books.id
-        ↓
-books.author_id
-        ↓
-auth.uid()
-```
-
-A operação só será permitida quando o usuário autenticado for o autor atual da obra.
-
-Quando:
-
-```text
-author_id = NULL
-```
-
-nenhum usuário comum poderá modificar a capa.
-
----
-
-## 8.5 Capas de rascunho em bucket público
-
-O bucket `covers` será público no MVP.
-
-Consequentemente, caso alguém conheça a URL direta de uma capa associada a um livro em rascunho, poderá visualizar apenas o arquivo da imagem.
-
-Essa escolha é aceita porque:
-
-```text
-URL da capa
-≠
-acesso ao registro books
-≠
-acesso aos chapters
-≠
-permissão de edição
-≠
-bypass de RLS
-```
-
-A confidencialidade do arquivo da capa não é tratada como requisito de segurança equivalente à confidencialidade do conteúdo do livro.
-
-UUIDs e caminhos não triviais reduzem descoberta acidental, mas não constituem mecanismo de autorização e não devem ser tratados como segredo.
-
----
-
-# 9. Pipeline de imagens
-
-## 9.1 Formatos aceitos na entrada
-
-O frontend aceitará inicialmente:
+Entrada aceita:
 
 ```text
 JPEG
@@ -651,382 +356,182 @@ PNG
 WebP
 ```
 
-Não serão aceitos no MVP:
-
-```text
-SVG
-GIF
-```
-
-## 9.2 Formato persistido
-
-O Storage armazenará somente:
+Persistência:
 
 ```text
 WebP
 ```
 
-Estrutura final esperada:
+Não aceitar SVG/GIF no MVP.
+
+## 8.2 Pipeline
 
 ```text
-avatars/{user_id}/avatar.webp
-covers/{book_id}/cover.webp
+arquivo
+→ validar
+→ redimensionar
+→ converter para WebP no cliente
+→ validar resultado
+→ upload
 ```
 
-## 9.3 Conversão
+A conversão client-side é otimização/UX, não mecanismo de segurança.
 
-A conversão ocorrerá no frontend antes do upload.
-
-Fluxo:
+## 8.3 Limites
 
 ```text
-arquivo escolhido
-       ↓
-validação inicial
-       ↓
-redimensionamento
-       ↓
-conversão client-side
-       ↓
-WebP
-       ↓
-validação do resultado
-       ↓
-Supabase Storage
+avatar: até 2 MB
+capa: até 5 MB
 ```
 
-O objetivo é:
+Os limites valem para o arquivo selecionado e para o resultado persistido.
 
-- reduzir tamanho armazenado;
-- reduzir tráfego;
-- padronizar formato;
-- evitar dependência de transformação dinâmica do Supabase no MVP;
-- manter a arquitetura simples e compatível com o plano atual.
+Quando tecnicamente possível, configurar também limites e MIME no Storage.
 
-Transformações dinâmicas poderão ser reavaliadas futuramente caso o produto necessite múltiplas variantes da mesma imagem.
+## 8.4 Responsabilidades
+
+Frontend:
+
+- formato aceito;
+- tamanho;
+- redimensionamento;
+- conversão;
+- feedback.
+
+Supabase:
+
+- autenticação;
+- autorização;
+- bucket;
+- path;
+- propriedade;
+- MIME persistido;
+- tamanho.
 
 ---
 
-# 10. Limites iniciais de upload
+# 9. Conteúdo e XSS
 
-## Avatar
-
-```text
-arquivo original selecionado: máximo 2 MB
-arquivo persistido: máximo 2 MB
-```
-
-## Capa
-
-```text
-arquivo original selecionado: máximo 5 MB
-arquivo persistido: máximo 5 MB
-```
-
-O processamento frontend deverá normalmente reduzir significativamente o tamanho final.
-
-Os limites devem ser aplicados também na configuração/política de Storage quando tecnicamente possível.
-
----
-
-# 11. Segurança dos uploads
-
-A validação client-side é apenas uma camada de UX e otimização.
-
-Um usuário pode ignorar completamente o código JavaScript e chamar a API de Storage diretamente.
-
-Portanto:
-
-```text
-FRONTEND
-├── verifica formato aceito
-├── verifica tamanho
-├── redimensiona
-├── converte para WebP
-└── fornece feedback
-
-SUPABASE
-├── verifica autenticação
-├── verifica autorização
-├── verifica bucket
-├── verifica caminho
-├── verifica proprietário
-├── restringe tipo persistido
-└── restringe tamanho
-```
-
-Evitar confiar apenas em extensão de arquivo.
-
-Sempre que possível, validar o MIME/content type apropriado do objeto persistido.
-
----
-
-# 12. XSS e conteúdo
-
-Capítulos e descrições são conteúdo de usuário.
+Capítulos, descrições e outros textos de usuário são não confiáveis.
 
 No MVP:
 
 - preferir texto simples;
-- renderizar usando APIs seguras, como `textContent`, quando aplicável;
-- não inserir conteúdo do usuário em `innerHTML` sem sanitização apropriada;
-- evitar permitir HTML arbitrário no editor.
+- utilizar APIs seguras como `textContent`;
+- não inserir texto de usuário em `innerHTML` sem sanitização;
+- não permitir HTML arbitrário no editor.
 
-Se rich text for adicionado, será necessária estratégia explícita de sanitização.
-
----
-
-# 13. Validação em duas camadas
-
-Toda validação relevante deve ser aplicada em duas camadas.
-
-```text
-Frontend
-  ↓
-feedback rápido
-mensagens amigáveis
-melhor UX
-
-Banco / Storage
-  ↓
-constraints
-RLS
-policies
-triggers
-integridade real
-```
-
-Regra:
-
-> Uma validação existente apenas no frontend deve ser considerada incompleta.
-
-O usuário pode ignorar ou modificar JavaScript e chamar a API diretamente.
+Rich text futuro exige estratégia explícita de sanitização.
 
 ---
 
-# 14. Proteção da publicação
+# 10. Validação e proteção no banco
 
-No MVP, a publicação de um livro será protegida por trigger no PostgreSQL.
+A validação frontend melhora UX, mas não garante integridade.
 
-Toda tentativa de:
+Regras que precisam sobreviver a chamadas diretas devem ser protegidas por constraints, triggers, policies ou função adequada.
 
-```text
-draft → published
-```
+Em especial:
 
-deve validar novamente no banco:
+- publicação inválida deve ser rejeitada;
+- criação de livro não pode terminar estruturalmente inválida;
+- posição de capítulos deve permanecer válida;
+- exclusões devem respeitar autoria e dependências.
 
-- descrição preenchida;
-- entre 1 e 3 gêneros;
-- pelo menos 1 capítulo publicado;
-- demais requisitos estruturais aplicáveis.
+Os critérios funcionais não são duplicados aqui:
 
-Mesmo uma chamada direta à API tentando executar:
-
-```text
-status = published
-```
-
-não pode contornar essa validação.
-
-Se os critérios não forem atendidos:
-
-```text
-UPDATE rejeitado
-```
-
-A aplicação também deve executar as mesmas verificações previamente para oferecer feedback adequado ao usuário.
+- livros/capítulos: `03-Regras-de-Negocio.md`;
+- constraints/FKs: `05-Modelo-de-Dados.md`.
 
 ---
 
-# 15. Integridade na criação de livros
+# 11. Autorização por identificador
 
-Um livro não deve permanecer persistido sem:
-
-- autor válido durante autoria ativa;
-- título;
-- pelo menos 1 gênero;
-- no máximo 3 gêneros.
-
-Como gêneros são armazenados em tabela associativa, a criação deve ser tratada como operação lógica atômica.
-
-Falha na associação obrigatória não deve resultar em livro incompleto persistido.
-
----
-
-# 16. Ordenação e exclusão de capítulos
-
-A posição dos capítulos deve ser protegida por:
-
-```text
-CHECK(position > 0)
-UNIQUE(book_id, position)
-```
-
-No MVP:
-
-- posição é atribuída pelo banco;
-- capítulo novo sempre nasce no final;
-- não há reordenação;
-- não há inserção intermediária.
-
-A exclusão de capítulo intermediário deve remover também os posteriores.
-
-A operação deve:
-
-- confirmar autoria;
-- limitar a exclusão ao livro correspondente;
-- evitar exclusão de conteúdo de terceiros;
-- manter a sequência restante válida.
-
----
-
-# 17. Autorização por ID
-
-Nunca assumir que um `book_id`, `chapter_id`, `user_id` ou outro identificador recebido pertence ao usuário.
-
-Toda operação deve validar a relação de propriedade por política ou consulta segura.
+Nunca assumir que um ID recebido pertence ao usuário.
 
 Exemplo:
 
 ```text
 chapter_id
-↓
-chapter.book_id
-↓
-book.author_id
-↓
-auth.uid()
+→ chapter.book_id
+→ book.author_id
+→ auth.uid()
 ```
 
-Conhecer ou modificar um identificador no frontend não concede autorização.
+A relação deve ser comprovada pela policy/consulta apropriada.
 
 ---
 
-# 18. Exclusão
+# 12. Privacidade
 
-Ações destrutivas devem:
+Separar:
 
-- exigir usuário autorizado;
-- pedir confirmação na interface quando apropriado;
-- respeitar FKs e dependências;
-- evitar estados órfãos;
-- respeitar regras de exclusão sequencial;
-- ser testadas com usuário diferente do proprietário.
-
-A exclusão definitiva da identidade de autenticação deve continuar sendo uma operação protegida e não pode expor `service_role` no frontend.
-
----
-
-# 19. Privacidade
-
-Evitar armazenar dados pessoais que não sejam necessários ao produto.
-
-Separar conceitualmente:
-
-- dados de autenticação;
-- dados públicos de perfil;
+- autenticação;
+- perfil público;
 - dados privados futuros.
 
-Se futuramente `profiles` passar a armazenar campos privados, eles não devem ser expostos apenas porque a linha do perfil possui leitura pública.
+Se `profiles` ganhar campos privados, a modelagem deve ser revista. RLS controla linhas, não resolve automaticamente exposição de colunas públicas e privadas na mesma estrutura.
 
 ---
 
-# 20. Logs e erros
+# 13. Logs e erros
 
-Mensagens de erro para o usuário não devem expor:
+Erros exibidos ao usuário não devem revelar:
 
 - query SQL;
-- segredo;
 - stack trace sensível;
-- dados internos desnecessários;
-- detalhes de políticas internas que facilitem abuso.
+- segredos;
+- informações internas desnecessárias.
 
-Durante desenvolvimento, logs podem ser mais detalhados, mas devem ser revisados antes da versão final.
-
----
-
-# 21. Dependências
-
-Mesmo usando JavaScript puro, dependências externas devem ser:
-
-- necessárias;
-- provenientes de fonte confiável;
-- atualizadas conscientemente;
-- documentadas.
-
-O processamento de imagens no MVP deve priorizar APIs nativas do navegador quando suficientes, evitando dependência adicional sem necessidade.
+O contrato de erros do frontend está em `14-Contrato-Front-Supabase.md`.
 
 ---
 
-# 22. Checklist antes de release
+# 14. Checklist de segurança
+
+Antes de release relevante:
 
 - [ ] RLS ativa nas tabelas expostas;
-- [ ] Matriz RLS implementada conforme versão vigente;
-- [ ] usuário B não altera conteúdo de A;
+- [ ] Matriz vigente implementada;
+- [ ] usuário A não altera dados de B;
 - [ ] rascunhos não vazam;
-- [ ] capítulo publicado de livro em rascunho não fica público;
-- [ ] `service_role` ausente do frontend;
-- [ ] nenhuma secret key está no repositório;
-- [ ] senha do banco não está no repositório;
-- [ ] apenas URL e chave pública apropriada são usadas no cliente;
-- [ ] `profiles` não contém dados privados indevidos;
-- [ ] `genres` não podem ser alterados por usuários comuns;
-- [ ] favoritos de terceiros não podem ser lidos ou alterados;
+- [ ] capítulo só é público com livro público;
+- [ ] `service_role` e secrets ausentes do frontend/repositório;
+- [ ] `genres` protegidos;
+- [ ] favoritos privados;
 - [ ] obra com `author_id = NULL` não pode ser assumida;
-- [ ] uploads validados;
-- [ ] usuário não grava avatar em pasta de terceiro;
-- [ ] usuário não grava, substitui ou exclui capa de livro alheio;
-- [ ] apenas WebP é persistido nos buckets de imagem do MVP;
-- [ ] limites de tamanho estão protegidos além do frontend;
-- [ ] conteúdo de usuário não é injetado como HTML inseguro;
-- [ ] secrets fora do repositório;
-- [ ] `.gitignore` revisado;
-- [ ] operações destrutivas protegidas;
-- [ ] erros não expõem informações indevidas;
-- [ ] publicação inválida é rejeitada pelo banco;
-- [ ] trigger de publicação testada por chamada direta à API;
-- [ ] livro não permanece com zero gêneros;
-- [ ] livro não recebe mais de três gêneros;
-- [ ] posições de capítulos não se repetem;
-- [ ] exclusão intermediária de capítulo respeita a regra do MVP.
+- [ ] paths de avatar/capa protegidos;
+- [ ] apenas WebP persistido nos buckets do MVP;
+- [ ] limites de upload protegidos além do frontend;
+- [ ] conteúdo não é injetado como HTML inseguro.
+
+Regressão completa: `10-Testes.md`.
 
 ---
 
-# 23. Regra para nova funcionalidade
+# 15. Regra para nova funcionalidade
 
 Toda funcionalidade que cria, altera ou expõe dados deve responder:
 
-1. quem pode ler?
-2. quem pode criar?
-3. quem pode editar?
-4. quem pode excluir?
-5. qual política RLS ou Storage garante isso?
-6. quais constraints, triggers ou funções garantem integridade?
-7. qual validação correspondente existe no frontend?
-8. qual teste comprova o comportamento?
-9. a mudança exige incremento da Matriz RLS `1.X`?
+1. quem lê?
+2. quem cria?
+3. quem edita?
+4. quem exclui?
+5. qual RLS/policy garante?
+6. quais constraints/triggers garantem integridade?
+7. qual validação frontend existe?
+8. qual teste comprova?
+9. exige nova versão da Matriz RLS?
 
 ---
 
-# 24. Evolução pós-MVP
+# 16. Evolução
 
 Avaliar futuramente:
 
-```text
-publish_book(book_id)
-```
-
-como função/RPC específica para tornar o fluxo de publicação uma operação explícita de domínio.
-
-Essa evolução não elimina automaticamente a necessidade de proteção defensiva no banco.
-
-Também poderão ser avaliadas:
-
-- buckets privados para conteúdos que exijam confidencialidade real;
-- variantes pré-geradas de imagens;
-- transformações dinâmicas;
-- formatos de imagem adicionais;
-- políticas de acesso diferentes para biblioteca/favoritos;
-- separação de campos públicos e privados de perfil;
-- novas versões da Matriz RLS `1.X`.
+- função/RPC explícita de publicação;
+- buckets privados quando houver confidencialidade real;
+- variantes e transformações de imagens;
+- novos formatos;
+- separação adicional de dados públicos/privados;
+- novas versões `1.X` da Matriz.

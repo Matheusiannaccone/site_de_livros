@@ -1,6 +1,6 @@
 # 12 — Deploy e Ambientes
 
-## 1. Ambientes previstos
+## 1. Ambientes
 
 ### Desenvolvimento local
 
@@ -8,11 +8,11 @@ Usado para implementação.
 
 ### Preview
 
-Quando disponível pelo fluxo da Vercel, utilizado para revisar branches/PRs sem substituir produção.
+Quando disponível pela Vercel, usado para revisão de branches/PRs.
 
 ### Produção
 
-Versão integrada e estável acessível pelo domínio Vercel/configurado.
+Versão integrada da `main`.
 
 ## 2. Serviços externos
 
@@ -34,30 +34,27 @@ Supabase
 Cada integrante deve conseguir:
 
 1. clonar o repositório;
-2. abrir o projeto em servidor local adequado;
-3. configurar variáveis necessárias;
-4. autenticar na aplicação;
-5. acessar o mesmo ambiente de desenvolvimento acordado;
-6. criar branch própria.
+2. executar o projeto;
+3. configurar valores públicos necessários;
+4. utilizar o ambiente Supabase acordado;
+5. criar branch própria.
 
-O projeto não deve depender de arquivos existentes apenas no computador de um integrante.
+O projeto não pode depender de arquivos existentes apenas em uma máquina.
 
-## 4. Variáveis e configuração
+## 4. Configuração
 
-Definir nomes padronizados para configurações públicas necessárias ao cliente.
+Valores públicos de inicialização devem possuir nomes padronizados.
 
-Se o projeto utilizar um arquivo de configuração JavaScript público para inicialização do Supabase, documentar claramente quais valores são intencionalmente públicos.
+Nunca adicionar credenciais privilegiadas ao frontend.
 
-Nunca adicionar chaves privilegiadas.
+Se houver funções server-side, seus segredos ficam no ambiente protegido da Vercel.
 
-Caso funções server-side sejam adicionadas, segredos deverão ser configurados no ambiente da Vercel, não no frontend.
+Segurança de chaves: `11-Seguranca.md`.
 
 ## 5. Deploy
 
-Fluxo principal:
-
 ```text
-feature branch
+branch
   ↓
 Pull Request
   ↓
@@ -70,69 +67,69 @@ Vercel
 produção
 ```
 
-Configurar a `main` como branch de produção salvo motivo documentado para outra estratégia.
+A `main` é a branch de produção salvo decisão documentada em contrário.
+
+Workflow Git: `09-Git-e-Versionamento.md`.
 
 ## 6. Banco de dados
 
-Alterações estruturais não devem depender apenas de edição manual sem registro.
+Mudanças estruturais devem ser reproduzíveis.
 
-Preferência:
+Preferir:
 
-- registrar SQL/migrations;
-- versionar scripts seguros quando o fluxo do projeto for estabelecido;
-- documentar alteração relevante do schema.
+- migrations;
+- SQL versionado;
+- documentação do schema;
+- revisão antes de mudanças destrutivas.
 
-O banco de produção deve refletir a versão da aplicação correspondente.
+Rollback de frontend não desfaz automaticamente alterações no banco.
 
 ## 7. Dados de demonstração
 
-Próximo da entrega, criar conteúdo de demonstração que permita mostrar:
+Próximo da entrega, preparar dados suficientes para demonstrar:
 
 - mais de um usuário;
-- múltiplos livros;
-- gêneros diferentes;
-- livro com vários capítulos;
+- livros e gêneros diferentes;
+- múltiplos capítulos;
 - rascunho;
 - favorito/biblioteca.
 
-Não depender de improvisar conteúdo durante o pitch.
-
 ## 8. Rollback
 
-Para frontend:
+### Frontend
 
 - identificar último commit estável;
-- reverter mudança problemática;
+- reverter mudança;
 - gerar novo deploy.
 
-Para banco:
+### Banco
 
-- mudanças destrutivas exigem cautela;
-- migrations devem ser avaliadas antes da execução;
-- não presumir que rollback de código desfaz automaticamente alteração de dados.
+- avaliar migration;
+- proteger dados;
+- não assumir rollback automático.
 
 ## 9. Checklist de produção
 
-- [ ] `main` atualizada;
+Antes de produção/release:
+
+- [ ] `main` correta;
 - [ ] versão definida;
-- [ ] testes de regressão concluídos;
-- [ ] RLS revisada;
+- [ ] regressão concluída conforme `10-Testes.md`, seção **Checklist de regressão**;
+- [ ] checklist de segurança concluído conforme `11-Seguranca.md`;
 - [ ] nenhuma chave privilegiada no bundle;
-- [ ] links corretos;
-- [ ] 404 funcionando;
-- [ ] mobile validado;
+- [ ] links/404 validados;
 - [ ] banco compatível;
-- [ ] storage funcionando;
-- [ ] documentação atualizada;
+- [ ] Storage funcionando;
+- [ ] documentação compatível;
 - [ ] tag/release criada quando aplicável.
 
 ## 10. Responsabilidade de equipe
 
 Pelo menos duas pessoas devem saber:
 
-- acessar configurações do Supabase;
-- entender o deploy Vercel;
-- recuperar uma versão anterior do Git;
+- acessar Supabase;
+- compreender deploy Vercel;
+- recuperar versão anterior;
 - interpretar erros básicos de produção.
 
-Evitar que infraestrutura se torne conhecimento exclusivo de um único integrante.
+Infraestrutura não deve depender de conhecimento exclusivo de uma pessoa.
