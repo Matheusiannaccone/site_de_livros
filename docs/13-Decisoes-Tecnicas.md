@@ -146,11 +146,14 @@ Qualquer usuário pode manipular o JavaScript executado no próprio navegador.
 
 Usar RLS como camada obrigatória de autorização para operações em dados expostos.
 
+A implementação do MVP deve seguir a Matriz RLS versionada registrada em `11-Seguranca.md`.
+
 ## Consequências
 
 - botões escondidos deixam de ser considerados proteção;
 - políticas precisam ser testadas com usuários diferentes;
-- novas tabelas não podem entrar em produção sem revisão de acesso.
+- novas tabelas não podem entrar em produção sem revisão de acesso;
+- mudanças futuras na baseline de autorização devem gerar versão `1.X` da matriz.
 
 ---
 
@@ -246,11 +249,17 @@ Usuários podem favoritar múltiplos livros e um livro pode ser favoritado por m
 
 Modelar favoritos por tabela associativa `favorites`.
 
+No MVP, a biblioteca será privada: somente o próprio usuário poderá consultar e gerenciar seus favoritos.
+
+Somente livros publicados serão elegíveis para inserção em `favorites`.
+
 ## Consequências
 
 - integridade relacional;
 - prevenção de duplicata por chave composta/constraint;
-- consulta simples da biblioteca de um usuário.
+- consulta simples da biblioteca de um usuário;
+- favoritos não se tornam um recurso social público no MVP;
+- RLS deve impedir leitura ou alteração de favoritos de terceiros.
 
 ---
 
@@ -345,7 +354,7 @@ Permitir que visitantes não autenticados:
 - acessem o catálogo;
 - pesquisem e filtrem obras;
 - abram páginas de livros publicados;
-- leiam capítulos publicados.
+- leiam capítulos publicados pertencentes a livros também publicados.
 
 Autenticação permanece obrigatória para operações pessoais e autorais, como publicar, editar, excluir e favoritar.
 
@@ -360,8 +369,9 @@ Autenticação permanece obrigatória para operações pessoais e autorais, como
 **Técnicas**
 
 - políticas RLS devem permitir `SELECT` anônimo somente para conteúdo publicado;
+- capítulo publicado de livro em rascunho continua privado;
 - rascunhos permanecem restritos ao autor;
-- favoritos continuam restritos a usuários autenticados.
+- favoritos continuam restritos a usuários autenticados e ao próprio proprietário.
 
 ---
 
@@ -442,14 +452,17 @@ Utilizar lista controlada inicial com 12 gêneros:
 11. Ficção Histórica;
 12. Fanfic.
 
-Cada livro deverá possuir no mínimo 1 e no máximo 3 gêneros para publicação.
+Cada livro deverá possuir no mínimo 1 e no máximo 3 gêneros desde sua criação.
+
+Usuários comuns terão somente leitura de `genres`.
 
 ## Consequências
 
 - filtros possuem valores consistentes;
 - `genres` permanece uma tabela controlada;
 - `book_genres` mantém a relação N:N;
-- é necessário validar o limite máximo de três associações por livro.
+- é necessário validar mínimo e máximo de associações por livro;
+- alteração administrativa da lista não fica exposta ao cliente comum.
 
 ---
 
@@ -501,6 +514,7 @@ As obras mantidas:
 **Segurança**
 
 - uma obra sem autor vinculado continua legível quando publicada, mas não pode ser alterada por usuários comuns;
+- nenhum usuário pode assumir uma obra com `author_id = NULL`;
 - a exclusão da identidade de autenticação deve ocorrer por operação protegida, sem service role no frontend.
 
 **Experiência**
@@ -709,7 +723,7 @@ Toda validação relevante de negócio deverá existir:
 ```text
 Frontend
 +
-Banco de dados
+Banco de dados / Storage
 ```
 
 O frontend será responsável por:
@@ -718,11 +732,12 @@ O frontend será responsável por:
 - mensagens claras;
 - evitar requisições sabidamente inválidas.
 
-O banco será responsável por:
+O banco e o Storage serão responsáveis por:
 
 - integridade;
+- autorização;
 - proteção contra chamadas diretas à API;
-- impedir estados inválidos mesmo quando o frontend for ignorado.
+- impedir estados ou uploads inválidos mesmo quando o frontend for ignorado.
 
 ## Publicação no MVP
 
@@ -739,7 +754,8 @@ A trigger deverá validar os critérios mínimos antes de aceitar a alteração.
 ## Consequências
 
 - chamadas diretas à API não contornam critérios de publicação;
-- testes precisam cobrir frontend e banco;
+- chamadas diretas ao Storage não contornam propriedade de upload;
+- testes precisam cobrir frontend, banco e Storage;
 - regras críticas não podem existir apenas como validação de formulário.
 
 ## Evolução futura
@@ -915,6 +931,233 @@ O frontend poderá utilizar `slug` para:
 
 ---
 
+# ADR-023 — Matriz RLS 1.0 como baseline do MVP
+
+**Status:** Aceito
+
+**Refina:** ADR-004, ADR-009, ADR-013, ADR-015 e ADR-016.
+
+## Contexto
+
+As regras anteriores definiam a necessidade de RLS, mas ainda não consolidavam uma matriz completa de leitura, criação, edição e exclusão por tabela.
+
+A equipe precisa de uma baseline estável antes de implementar as migrations.
+
+## Decisão
+
+Adotar a **Matriz RLS 1.0** documentada em `11-Seguranca.md`.
+
+Resumo:
+
+```text
+profiles
+SELECT público
+INSERT/UPDATE próprio usuário
+DELETE direto negado
+
+books
+SELECT published público ou próprias obras
+INSERT/UPDATE/DELETE somente autor
+
+chapters
+SELECT público apenas quando chapter e book estão published
+escrita somente autor do livro
+
+genres
+SELECT público
+escrita comum negada
+
+book_genres
+leitura conforme visibilidade do livro
+INSERT/DELETE somente autor
+UPDATE negado no MVP
+
+favorites
+privados ao próprio usuário
+INSERT somente para livro published
+UPDATE não utilizado
+DELETE somente próprio usuário
+```
+
+Obras com `author_id = NULL` não podem ser assumidas ou modificadas por usuários comuns.
+
+## Versionamento
+
+A baseline inicial é:
+
+```text
+1.0
+```
+
+Mudanças futuras devem utilizar:
+
+```text
+1.1
+1.2
+1.3
+...
+```
+
+Cada mudança deverá registrar escopo e justificativa.
+
+## Consequências
+
+- migrations possuem contrato de autorização explícito;
+- testes podem ser organizados por operação e identidade;
+- rascunhos de terceiros permanecem protegidos;
+- favoritos deixam de ter privacidade ambígua;
+- evolução da política passa a ter histórico versionado.
+
+---
+
+# ADR-024 — Buckets públicos com escrita protegida
+
+**Status:** Aceito
+
+## Contexto
+
+Capas e avatares precisam ser exibidos com frequência em páginas públicas.
+
+Manter todos os arquivos privados exigiria geração e gerenciamento de URLs assinadas sem necessidade funcional equivalente no MVP.
+
+Por outro lado, escrita não pode depender do frontend.
+
+## Alternativas consideradas
+
+1. buckets privados;
+2. buckets públicos sem controle suficiente de escrita;
+3. buckets públicos para leitura com policies de propriedade para mutações.
+
+## Decisão
+
+Adotar a terceira alternativa.
+
+Buckets:
+
+```text
+avatars
+covers
+```
+
+Ambos serão públicos para leitura.
+
+Paths:
+
+```text
+avatars/{user_id}/avatar.webp
+covers/{book_id}/cover.webp
+```
+
+Autorização:
+
+```text
+avatar
+→ auth.uid() = user_id do path
+
+capa
+→ book_id do path
+→ books.author_id = auth.uid()
+```
+
+## Capas de rascunho
+
+A URL de uma capa não será tratada como segredo.
+
+Se alguém obtiver a URL direta de uma capa de rascunho, poderá visualizar apenas o arquivo da imagem.
+
+Isso não concede acesso ao registro `books`, capítulos privados ou permissões adicionais.
+
+## Consequências
+
+**Positivas**
+
+- entrega simples de imagens públicas;
+- ausência de signed URLs para o fluxo comum;
+- autorização de escrita continua no Storage;
+- paths possuem propriedade previsível.
+
+**Limitação aceita**
+
+- capa de rascunho não possui confidencialidade absoluta enquanto armazenada no bucket público.
+
+---
+
+# ADR-025 — Conversão client-side para WebP antes do upload
+
+**Status:** Aceito
+
+## Contexto
+
+Imagens de capas e avatares podem ser enviadas em formatos e dimensões maiores que o necessário para uso web.
+
+Foram consideradas transformações dinâmicas no momento da leitura, processamento server-side e otimização antes do upload.
+
+## Alternativas consideradas
+
+1. armazenar original e transformar dinamicamente ao servir;
+2. processar em função server-side antes de salvar;
+3. redimensionar e converter no navegador antes do upload.
+
+## Decisão
+
+Adotar a terceira alternativa no MVP.
+
+Entrada aceita:
+
+```text
+JPEG
+PNG
+WebP
+```
+
+Persistência:
+
+```text
+WebP
+```
+
+Fluxo:
+
+```text
+arquivo
+↓
+validação
+↓
+redimensionamento
+↓
+conversão WebP no cliente
+↓
+upload
+```
+
+Limites iniciais:
+
+```text
+avatar: 2 MB
+capa: 5 MB
+```
+
+O Storage também deverá aplicar limites e policies compatíveis quando tecnicamente possível.
+
+A conversão client-side é otimização e UX; não é mecanismo de segurança.
+
+## Consequências
+
+**Positivas**
+
+- arquivos persistidos padronizados;
+- menor armazenamento e tráfego;
+- não exige processamento dinâmico no MVP;
+- não exige função server-side apenas para conversão simples.
+
+**Limitações**
+
+- o cliente pode ser modificado ou ignorado;
+- tipo, tamanho, path e propriedade precisam continuar protegidos no Storage;
+- variantes adicionais de tamanho poderão exigir estratégia futura.
+
+---
+
 # 2. Decisões pendentes
 
 Registrar novos ADRs quando forem definidas:
@@ -926,7 +1169,9 @@ Registrar novos ADRs quando forem definidas:
 - PWA/offline;
 - experiência completa de múltiplos idiomas;
 - estratégia avançada de reorganização de capítulos;
-- eventual adoção de função/RPC explícita de publicação.
+- eventual adoção de função/RPC explícita de publicação;
+- eventual adoção de buckets privados para novos tipos de arquivo;
+- eventual estratégia de variantes de imagem.
 
 ## 3. Regra de manutenção
 
