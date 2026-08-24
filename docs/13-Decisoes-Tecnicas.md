@@ -510,6 +510,411 @@ As obras mantidas:
 
 ---
 
+# ADR-017 — Validade mínima do livro desde a criação
+
+**Status:** Aceito
+
+**Substitui parcialmente:** ADR-014 e ADR-015 quanto ao momento em que título e gêneros passam a ser obrigatórios.
+
+## Contexto
+
+O modelo anterior permitia interpretar que título e gêneros poderiam estar ausentes enquanto o livro permanecesse em rascunho.
+
+Durante a revisão do modelo conceitual, foi identificado que um livro precisa existir como entidade antes que seus capítulos possam ser criados.
+
+Permitir registros sem identidade mínima produziria rascunhos estruturalmente inválidos e dificultaria a organização das obras pelo próprio autor.
+
+## Alternativas consideradas
+
+1. permitir livro quase vazio e exigir campos somente na publicação;
+2. exigir todos os campos já na criação;
+3. exigir identidade mínima na criação e permitir complementação durante o rascunho.
+
+## Decisão
+
+Adotar a terceira alternativa.
+
+Um livro só será criado quando possuir:
+
+- autor válido;
+- título;
+- entre 1 e 3 gêneros.
+
+O sistema deverá aplicar defaults:
+
+```text
+status = draft
+publication_status = ongoing
+language = pt-BR
+```
+
+Poderão permanecer ausentes no rascunho:
+
+- descrição;
+- capa;
+- capítulos;
+- `published_at`.
+
+A criação do livro e das associações obrigatórias de gênero deverá ser tratada como uma operação lógica atômica.
+
+## Consequências
+
+**Positivas**
+
+- não existem livros sem identidade mínima;
+- lista de rascunhos permanece compreensível;
+- simplifica parte das verificações posteriores;
+- gênero passa a ser característica estrutural da obra.
+
+**Técnicas**
+
+- `books.title` deverá ser obrigatório;
+- não pode permanecer livro persistido sem registro correspondente em `book_genres`;
+- mínimo e máximo de gêneros devem ser garantidos no frontend e no banco.
+
+---
+
+# ADR-018 — Estados controlados com text + CHECK
+
+**Status:** Aceito
+
+## Contexto
+
+Os campos:
+
+```text
+books.status
+chapters.status
+books.publication_status
+```
+
+possuem conjuntos pequenos e controlados de valores.
+
+Foram consideradas duas formas principais de representação no PostgreSQL:
+
+1. enums;
+2. `text` com `CHECK`.
+
+## Alternativas consideradas
+
+### Enum PostgreSQL
+
+Vantagens:
+
+- domínio fortemente tipado;
+- valores permitidos definidos no próprio tipo.
+
+Desvantagens:
+
+- evolução do conjunto exige alteração do tipo;
+- adiciona tipos extras às migrations;
+- maior complexidade para o estágio atual do projeto.
+
+### `text` + `CHECK`
+
+Vantagens:
+
+- impede valores inválidos;
+- migrations mais simples;
+- conjunto de valores pode evoluir com menor complexidade.
+
+## Decisão
+
+Utilizar `text` com constraints `CHECK`.
+
+Para estado editorial:
+
+```text
+draft
+published
+```
+
+Para situação narrativa:
+
+```text
+ongoing
+completed
+discontinued
+```
+
+## Consequências
+
+- valores inválidos continuam bloqueados pelo banco;
+- não serão criados enums PostgreSQL no MVP;
+- alterações futuras serão feitas por migration da constraint correspondente.
+
+---
+
+# ADR-019 — Idioma padrão pt-BR sem domínio fechado
+
+**Status:** Aceito
+
+## Contexto
+
+O modelo possui `books.language`, mas o MVP não terá interface completa de internacionalização.
+
+Era necessário definir um valor padrão sem impedir evolução futura para outros idiomas.
+
+## Alternativas consideradas
+
+1. remover o campo no MVP;
+2. limitar o campo exclusivamente a `pt-BR`;
+3. usar `text` com default `pt-BR` sem `CHECK` fechado.
+
+## Decisão
+
+Utilizar:
+
+```text
+language text NOT NULL DEFAULT 'pt-BR'
+```
+
+Não limitar os idiomas permitidos por `CHECK` no MVP.
+
+## Consequências
+
+**Positivas**
+
+- obras atuais recebem idioma automaticamente;
+- suporte futuro a `en-US`, `de-DE`, `es-ES` e outros códigos não exige alteração estrutural da coluna.
+
+**Escopo**
+
+Interface de escolha de idioma, filtros e internacionalização completa permanecem pós-MVP.
+
+---
+
+# ADR-020 — Validação obrigatória no frontend e no banco
+
+**Status:** Aceito
+
+**Refina:** ADR-004 e ADR-014.
+
+## Contexto
+
+Uma aplicação client-side não pode considerar o JavaScript executado no navegador como barreira de segurança.
+
+Ao mesmo tempo, validações apenas no banco produzem experiência de usuário inferior.
+
+## Alternativas consideradas
+
+1. validar somente no frontend;
+2. validar somente no banco;
+3. validar em ambas as camadas.
+
+## Decisão
+
+Toda validação relevante de negócio deverá existir:
+
+```text
+Frontend
++
+Banco de dados
+```
+
+O frontend será responsável por:
+
+- feedback imediato;
+- mensagens claras;
+- evitar requisições sabidamente inválidas.
+
+O banco será responsável por:
+
+- integridade;
+- proteção contra chamadas diretas à API;
+- impedir estados inválidos mesmo quando o frontend for ignorado.
+
+## Publicação no MVP
+
+A transição:
+
+```text
+draft → published
+```
+
+de um livro será protegida por trigger PostgreSQL.
+
+A trigger deverá validar os critérios mínimos antes de aceitar a alteração.
+
+## Consequências
+
+- chamadas diretas à API não contornam critérios de publicação;
+- testes precisam cobrir frontend e banco;
+- regras críticas não podem existir apenas como validação de formulário.
+
+## Evolução futura
+
+Avaliar função/RPC:
+
+```text
+publish_book(book_id)
+```
+
+como operação explícita de publicação.
+
+No MVP, a função não será necessária.
+
+---
+
+# ADR-021 — Sequência imutável de capítulos no MVP
+
+**Status:** Aceito
+
+## Contexto
+
+Reordenação de capítulos, inserção intermediária e renumeração adicionariam complexidade desnecessária ao fluxo inicial de escrita.
+
+O MVP necessita apenas de leitura sequencial e criação progressiva dos capítulos.
+
+## Alternativas consideradas
+
+1. permitir reordenação completa;
+2. utilizar posições espaçadas para facilitar inserções futuras;
+3. utilizar sequência inteira contínua e imutável no MVP.
+
+## Decisão
+
+Utilizar:
+
+```text
+1, 2, 3, 4, ...
+```
+
+Todo capítulo novo será criado no final.
+
+Sua posição será atribuída pelo banco:
+
+```text
+MAX(position) + 1
+```
+
+Para o primeiro capítulo:
+
+```text
+position = 1
+```
+
+Constraints:
+
+```text
+CHECK(position > 0)
+UNIQUE(book_id, position)
+```
+
+No MVP não será permitido:
+
+- reordenar capítulos;
+- inserir capítulo entre existentes;
+- escolher posição manualmente.
+
+## Exclusão
+
+Se um capítulo intermediário for excluído, todos os capítulos posteriores também serão removidos.
+
+Exemplo:
+
+```text
+1 2 3 4 5 6 7 8 9 10
+```
+
+Excluir `7`:
+
+```text
+1 2 3 4 5 6
+```
+
+## Consequências
+
+**Positivas**
+
+- sequência permanece contínua;
+- não é necessária renumeração;
+- navegação anterior/próximo é simples;
+- menor complexidade no MVP.
+
+**Negativas**
+
+- autor não pode reorganizar obra já escrita;
+- exclusão intermediária é destrutiva para capítulos posteriores.
+
+## Evolução futura
+
+Avaliar:
+
+- reordenação;
+- inserção entre capítulos;
+- exclusão intermediária preservando posteriores;
+- estratégia de renumeração.
+
+---
+
+# ADR-022 — Identidade numérica para gêneros e slug legível
+
+**Status:** Aceito
+
+**Refina:** ADR-015.
+
+## Contexto
+
+A tabela `genres` representa uma lista pequena, controlada e administrada pelo projeto.
+
+Foi necessário decidir entre:
+
+- UUID;
+- ID inteiro;
+- `slug` como chave primária.
+
+## Alternativas consideradas
+
+### UUID
+
+Uniformizaria IDs com outras entidades, mas adicionaria complexidade sem ganho relevante para uma tabela pequena e controlada.
+
+### Slug como PK
+
+Seria legível, porém faria alterações futuras de nomenclatura afetarem a identidade referencial do gênero.
+
+### ID inteiro + slug UNIQUE
+
+Separa identidade interna do banco da identidade legível utilizada pela aplicação.
+
+## Decisão
+
+Utilizar:
+
+```text
+genres.id
+→ integer
+→ PRIMARY KEY
+
+genres.name
+→ text
+→ UNIQUE
+
+genres.slug
+→ text
+→ UNIQUE
+```
+
+`book_genres.genre_id` deverá referenciar `genres.id`.
+
+O frontend poderá utilizar `slug` para:
+
+- filtros;
+- identificação legível;
+- URLs futuras.
+
+## Consequências
+
+**Positivas**
+
+- FKs pequenas e simples;
+- alterações de slug não exigem alteração da PK;
+- frontend mantém identificador humano;
+- banco mantém identidade interna estável.
+
+---
+
 # 2. Decisões pendentes
 
 Registrar novos ADRs quando forem definidas:
@@ -518,10 +923,13 @@ Registrar novos ADRs quando forem definidas:
 - mecanismo de avaliação/curtida;
 - comentários e moderação;
 - estratégia de Full Text Search;
-- PWA/offline.
+- PWA/offline;
+- experiência completa de múltiplos idiomas;
+- estratégia avançada de reorganização de capítulos;
+- eventual adoção de função/RPC explícita de publicação.
 
 ## 3. Regra de manutenção
 
 ADR aceito não deve ser apagado quando uma decisão mudar.
 
-Criar novo ADR indicando que substitui o anterior, preservando histórico técnico.
+Criar novo ADR indicando que substitui ou refina o anterior, preservando histórico técnico.
