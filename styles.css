@@ -1,0 +1,652 @@
+/* =========================================================
+   CONFIGURAÇÕES GERAIS
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 30px;
+
+    color: #30251d;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+
+    /* Fundo envelhecido */
+
+    background:
+
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(91, 57, 29, 0.12) 0,
+            rgba(91, 57, 29, 0.04) 80px,
+            transparent 180px
+        ),
+
+        radial-gradient(
+            circle at 85% 75%,
+            rgba(91, 57, 29, 0.10) 0,
+            rgba(91, 57, 29, 0.03) 100px,
+            transparent 200px
+        ),
+
+        #d8c39b;
+}
+
+
+/* =========================================================
+   MANCHAS DO PAPEL
+   ========================================================= */
+
+body::before {
+
+    content: "";
+
+    position: fixed;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    opacity: 0.45;
+
+    background:
+
+        radial-gradient(
+            ellipse at 20% 30%,
+            rgba(78, 45, 20, 0.13) 0,
+            transparent 18%
+        ),
+
+        radial-gradient(
+            ellipse at 80% 20%,
+            rgba(78, 45, 20, 0.09) 0,
+            transparent 15%
+        ),
+
+        radial-gradient(
+            ellipse at 65% 85%,
+            rgba(78, 45, 20, 0.12) 0,
+            transparent 17%
+        ),
+
+        radial-gradient(
+            ellipse at 10% 85%,
+            rgba(78, 45, 20, 0.08) 0,
+            transparent 14%
+        );
+
+    filter: blur(12px);
+}
+
+
+/* =========================================================
+   ÁREA PRINCIPAL
+   ========================================================= */
+
+main {
+
+    width: 100%;
+
+    max-width: 500px;
+
+    position: relative;
+
+    z-index: 1;
+}
+
+
+/* =========================================================
+   TÍTULO
+   ========================================================= */
+
+#titulo {
+
+    margin-bottom: 12px;
+
+    color: #3b281c;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(2.2rem, 5vw, 3.2rem);
+
+    font-weight: bold;
+
+    text-align: center;
+
+    letter-spacing: 2px;
+
+    text-shadow:
+
+        1px 1px 0 #ead9b7,
+
+        2px 2px 3px
+        rgba(50, 30, 15, 0.25);
+}
+
+
+/* =========================================================
+   FOLHA
+   ========================================================= */
+
+#container {
+
+    position: relative;
+
+    width: 100%;
+
+    padding: 38px 42px 35px;
+
+    display: flex;
+
+    flex-direction: column;
+
+
+    background:
+
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(91, 57, 29, 0.08) 0,
+            transparent 90px
+        ),
+
+        radial-gradient(
+            circle at 90% 80%,
+            rgba(91, 57, 29, 0.07) 0,
+            transparent 100px
+        ),
+
+        #eee0bd;
+
+
+    border: 1px solid #b49a6e;
+
+    border-radius: 3px;
+
+
+    box-shadow:
+
+        0 8px 20px
+        rgba(47, 29, 16, 0.28),
+
+        0 2px 5px
+        rgba(47, 29, 16, 0.18);
+
+
+    transform:
+        rotate(-0.4deg);
+}
+
+
+/* =========================================================
+   BORDA INTERNA
+   ========================================================= */
+
+#container::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 10px;
+
+    border:
+        1px solid
+        rgba(111, 77, 43, 0.22);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   ORNAMENTO
+   ========================================================= */
+
+.ornamento {
+
+    position: relative;
+
+    z-index: 2;
+
+    margin-bottom: 4px;
+
+    color: #765337;
+
+    font-size: 26px;
+
+    text-align: center;
+
+    opacity: 0.8;
+}
+
+
+/* =========================================================
+   SUBTÍTULO
+   ========================================================= */
+
+.subtitulo {
+
+    position: relative;
+
+    z-index: 2;
+
+    margin-bottom: 25px;
+
+    color: #67513c;
+
+    font-size: 15px;
+
+    font-style: italic;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   LABELS
+   ========================================================= */
+
+#container label {
+
+    position: relative;
+
+    z-index: 2;
+
+    margin-top: 10px;
+
+    margin-left: 3px;
+
+    color: #5d4430;
+
+    font-size: 14px;
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+#container input {
+
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+
+    height: 48px;
+
+    margin-top: 6px;
+
+    padding: 0 15px;
+
+    background:
+        rgba(255, 249, 229, 0.72);
+
+    color: #30251d;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 16px;
+
+    border: none;
+
+    border-bottom:
+        2px solid #9b805b;
+
+    outline: none;
+
+    border-radius:
+        2px 2px 0 0;
+
+
+    transition:
+
+        background 0.2s ease,
+
+        border-color 0.2s ease,
+
+        box-shadow 0.2s ease;
+}
+
+
+/* Placeholder */
+
+#container input::placeholder {
+
+    color: #76624b;
+
+    opacity: 0.85;
+}
+
+
+/* Campo selecionado */
+
+#container input:focus {
+
+    background:
+        rgba(255, 251, 237, 0.95);
+
+    border-bottom-color:
+        #5d3c24;
+
+    box-shadow:
+        0 3px 0
+        rgba(93, 60, 36, 0.12);
+}
+
+
+/* =========================================================
+   MENSAGENS DE ERRO
+   ========================================================= */
+
+#container p {
+
+    min-height: 20px;
+
+    margin-top: 5px;
+
+    margin-left: 4px;
+
+    color: #7a2f22;
+
+    font-size: 13px;
+
+    font-style: italic;
+}
+
+
+.error {
+
+    animation:
+        aparecerErro 0.25s ease;
+}
+
+
+@keyframes aparecerErro {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            translateX(-5px);
+    }
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            translateX(0);
+    }
+}
+
+
+/* =========================================================
+   INPUT COM ERRO
+   ========================================================= */
+
+#container input.input_error {
+
+    border-bottom-color:
+        #8a3326;
+
+    background:
+        rgba(245, 220, 204, 0.55);
+
+    animation:
+        tremerCampo 0.25s ease;
+}
+
+
+@keyframes tremerCampo {
+
+    0% {
+        transform:
+            translateX(0);
+    }
+
+    25% {
+        transform:
+            translateX(-4px);
+    }
+
+    50% {
+        transform:
+            translateX(4px);
+    }
+
+    75% {
+        transform:
+            translateX(-3px);
+    }
+
+    100% {
+        transform:
+            translateX(0);
+    }
+}
+
+
+/* =========================================================
+   MENSAGEM GERAL DO LOGIN
+   ========================================================= */
+
+#login-error {
+
+    min-height: 0 !important;
+
+    margin: 8px 0 0 0 !important;
+
+    color: #8a3326 !important;
+
+    font-size: 13px !important;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   BOTÃO
+   ========================================================= */
+
+#submit {
+
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+
+    height: 50px;
+
+    margin-top: 15px;
+
+    background: #654127;
+
+    color: #f4e8c9;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    letter-spacing: 1px;
+
+    border:
+        1px solid #4b2e1c;
+
+    border-radius: 2px;
+
+    cursor: pointer;
+
+
+    box-shadow:
+
+        0 3px 0 #422717,
+
+        0 5px 8px
+        rgba(49, 29, 15, 0.18);
+
+
+    transition:
+
+        transform 0.15s ease,
+
+        background 0.2s ease,
+
+        box-shadow 0.15s ease;
+}
+
+
+/* Hover */
+
+#submit:hover {
+
+    background: #765033;
+
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+
+        0 4px 0 #422717,
+
+        0 7px 10px
+        rgba(49, 29, 15, 0.20);
+}
+
+
+/* Clique */
+
+#submit:active {
+
+    transform:
+        translateY(2px);
+
+    box-shadow:
+
+        0 1px 0 #422717,
+
+        0 3px 5px
+        rgba(49, 29, 15, 0.18);
+}
+
+
+/* =========================================================
+   CADASTRO
+   ========================================================= */
+
+#cadastro-text {
+
+    position: relative;
+
+    z-index: 2;
+
+    margin-top: 25px !important;
+
+    min-height: auto !important;
+
+    color: #67513c !important;
+
+    font-size: 14px !important;
+
+    font-style: normal !important;
+
+    text-align: center;
+}
+
+
+#cadastro-text a {
+
+    color: #654127;
+
+    font-weight: bold;
+
+    text-decoration: underline;
+
+    transition:
+        color 0.2s ease;
+}
+
+
+#cadastro-text a:hover {
+
+    color: #8a5c37;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding: 20px;
+    }
+
+
+    #titulo {
+
+        font-size: 2.2rem;
+
+        letter-spacing: 1px;
+    }
+
+
+    #container {
+
+        padding:
+            35px 25px;
+
+        transform:
+            rotate(0);
+    }
+
+
+    #container input {
+
+        height: 46px;
+
+        font-size: 15px;
+    }
+
+
+    #submit {
+
+        height: 48px;
+    }
+}
