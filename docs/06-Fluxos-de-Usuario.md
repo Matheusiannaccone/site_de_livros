@@ -4,6 +4,8 @@
 
 Mapear os caminhos principais da aplicação para orientar páginas, navegação, estados de interface e testes.
 
+Regras detalhadas permanecem em `03-Regras-de-Negocio.md`.
+
 ---
 
 ## 2. Visitante
@@ -13,7 +15,7 @@ Mapear os caminhos principais da aplicação para orientar páginas, navegação
 ```text
 Home
   ↓
-Selecionar livro
+Selecionar livro publicado
   ↓
 Página do livro
   ↓
@@ -24,7 +26,7 @@ Leitor
 Anterior / Próximo
 ```
 
-A decisão sobre exigir login para leitura pública deve permanecer consistente em toda a aplicação. A recomendação inicial é permitir leitura pública de conteúdo publicado e exigir autenticação para ações pessoais.
+A leitura pública não exige autenticação.
 
 ### 2.2 Cadastro
 
@@ -40,19 +42,17 @@ Criar identidade no Auth
 Criar perfil
   ↓
 Sessão autenticada
-  ↓
-Home ou onboarding mínimo
 ```
 
 ### 2.3 Login
 
 ```text
-Página de login
+Login
   ↓
 Credenciais
   ↓
 Supabase Auth
-  ├── inválidas → mensagem de erro
+  ├── inválidas → erro
   └── válidas → sessão + redirecionamento
 ```
 
@@ -67,9 +67,9 @@ Página do livro
   ↓
 Adicionar à biblioteca
   ↓
-Registro em favorites
+favorite criado
   ↓
-Interface confirma estado
+Interface atualizada
 ```
 
 ### 3.2 Remover da biblioteca
@@ -79,7 +79,7 @@ Biblioteca/Página do livro
   ↓
 Remover
   ↓
-Registro em favorites excluído
+favorite excluído
   ↓
 Interface atualizada
 ```
@@ -93,28 +93,30 @@ Selecionar gênero
   ↓
 Consulta
   ↓
-Listagem de livros publicados compatíveis
+Livros publicados compatíveis
 ```
 
 ---
 
 ## 4. Escritor
 
-Como não existe conta separada de escritor, esses fluxos ficam disponíveis ao mesmo usuário autenticado.
+Não existe conta separada de escritor.
 
 ### 4.1 Criar livro
 
 ```text
-Perfil / Meus livros
+Meus livros
   ↓
 Novo livro
   ↓
-Título + gênero (descrição + capa opcionais na criação, obrigatórios na publicação)
+Título + 1 a 3 gêneros
   ↓
 Salvar
   ↓
-Livro em rascunho
+Livro em draft
 ```
+
+Descrição e capa podem ser adicionadas depois.
 
 ### 4.2 Editar livro
 
@@ -125,87 +127,89 @@ Selecionar obra própria
   ↓
 Editar
   ↓
-Salvar alterações
+Salvar
 ```
 
 ### 4.3 Criar capítulo
 
 ```text
-Meus livros
-  ↓
 Livro próprio
   ↓
 Novo capítulo
   ↓
-Título + conteúdo
+Título/conteúdo
   ↓
 Salvar rascunho
 ```
 
+A posição é atribuída pelo banco.
+
 ### 4.4 Publicar capítulo
 
 ```text
-Editor do capítulo
+Editor
   ↓
-Validar campos
+Validar critérios
   ↓
 Publicar
   ↓
 status = published
-  ↓
-Capítulo passa a ser elegível para leitura pública
 ```
+
+Critérios: `03-Regras-de-Negocio.md`, RN-026.
 
 ### 4.5 Publicar livro
 
 ```text
-Livro em rascunho
+Livro em draft
   ↓
-Validar requisitos mínimos
+Validar critérios
   ↓
 Publicar
   ↓
 status = published
   ↓
-Obra aparece em descoberta pública
+Obra disponível publicamente
 ```
 
-A lista exata de pré-condições de publicação deve ser definida antes da implementação final.
+Critérios: `03-Regras-de-Negocio.md`, RN-019C.
 
 ---
 
 ## 5. Autorização negada
 
-### Exemplo: usuário tenta alterar obra de outra pessoa
-
 ```text
-Requisição de UPDATE
+Ação restrita
   ↓
-RLS
+Supabase
   ↓
-author_id != auth.uid()
+RLS/Policy
   ↓
-Operação negada
+operação negada
   ↓
-Frontend exibe erro apropriado
+service normaliza erro
+  ↓
+frontend exibe feedback
 ```
 
-O fluxo não deve depender de o botão de edição estar oculto.
+A interface não é a autoridade de segurança.
 
 ---
 
 ## 6. Estados importantes de UI
 
-Cada fluxo deve considerar:
+Os fluxos devem prever:
 
 - carregando;
-- dados carregados;
+- sucesso;
 - lista vazia;
 - erro recuperável;
-- erro de autorização;
-- sessão expirada;
-- ação concluída;
+- não autenticado;
+- não autorizado;
+- não encontrado;
 - confirmação antes de ação destrutiva.
+
+Formato dos retornos dos services: `14-Contrato-Front-Supabase.md`.
 
 ---
 
@@ -216,27 +220,19 @@ Cada fluxo deve considerar:
 ```text
 Leitor abre capítulo
   ↓
-Progresso salvo
+progresso salvo
   ↓
-Home/Biblioteca
-  ↓
-Continuar lendo
-  ↓
-Último ponto/capítulo
+retorno futuro ao último ponto
 ```
 
 ### Leitura offline
 
 ```text
-Livro/capítulo
+Conteúdo disponibilizado offline
   ↓
-Disponibilizar offline
+cache local
   ↓
-Conteúdo/cache armazenado localmente
-  ↓
-Sem internet
-  ↓
-Conteúdo previamente salvo continua disponível
+leitura sem conexão
 ```
 
-Esse fluxo requer desenho técnico específico antes da implementação.
+Esses fluxos não fazem parte do MVP e exigem desenho técnico próprio antes da implementação.

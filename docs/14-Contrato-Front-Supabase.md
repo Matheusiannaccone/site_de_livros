@@ -2,17 +2,17 @@
 
 ## 1. Objetivo
 
-Definir a fronteira estável entre a interface e a camada de dados do MVP.
-
-O objetivo é permitir que frontend e integração com Supabase avancem em paralelo sem que páginas e componentes dependam da implementação real de banco, Auth ou Storage.
+Definir a fronteira estável entre interface e camada de dados para permitir desenvolvimento paralelo com mocks e Supabase.
 
 ```text
 Contrato Front ↔ Supabase: 1.0
 ```
 
+Arquitetura de camadas: `04-Arquitetura.md`.
+
 ---
 
-## 2. Princípio arquitetural
+## 2. Princípio
 
 ```text
 PAGE
@@ -26,32 +26,15 @@ ADAPTER
 
 A página conhece apenas o service.
 
-Exemplo:
-
 ```js
 const result = await bookService.listPublishedBooks();
 ```
 
-A chamada deve permanecer igual com mock e com Supabase.
+A chamada permanece igual com mock ou Supabase.
 
 ---
 
-## 3. Responsabilidades
-
-| Camada | Responsabilidade | Não deve fazer |
-|---|---|---|
-| `pages/` | coordenar carregamento, eventos, navegação e estados | chamar Supabase diretamente |
-| `components/` | renderizar UI reutilizável | conhecer banco, Auth ou Storage |
-| `services/` | expor operações estáveis | manipular DOM |
-| adapter `mock` | reproduzir contratos e cenários | criar formatos próprios |
-| adapter `supabase` | executar integração e normalizar dados | expor resposta bruta do SDK |
-| PostgreSQL/RLS/Storage | integridade e autorização | cuidar de apresentação |
-
-> Nenhum arquivo de `pages/` ou `components/` deve depender diretamente do SDK do Supabase.
-
----
-
-## 4. Convenções
+## 3. Convenções
 
 Banco/Supabase:
 
@@ -75,11 +58,11 @@ publication_status → publicationStatus
 created_at → createdAt
 ```
 
-A transformação é responsabilidade do service/adapter.
+Adapters/services fazem a transformação.
 
 ---
 
-## 5. Resposta padrão
+## 4. Resposta padrão
 
 ### Sucesso
 
@@ -111,11 +94,9 @@ A transformação é responsabilidade do service/adapter.
 }
 ```
 
-O frontend não deve depender de mensagens ou estruturas brutas do Supabase/PostgreSQL.
+O frontend não consome estrutura bruta de erro do Supabase/PostgreSQL.
 
----
-
-## 6. Códigos de erro 1.0
+## 4.1 Códigos de erro
 
 ```text
 UNAUTHENTICATED
@@ -129,9 +110,9 @@ UNKNOWN_ERROR
 
 ---
 
-# 7. Contratos de dados
+# 5. Contratos de dados
 
-## 7.1 `Profile`
+## 5.1 `Profile`
 
 ```js
 {
@@ -163,17 +144,15 @@ avatarUrl
 }
 ```
 
-Em obra sem autor ativo:
+Quando não houver autor ativo:
 
 ```js
 author: null
 ```
 
-A interface exibe **Autor desconhecido**.
+A UI exibe **Autor desconhecido**.
 
----
-
-## 7.2 `Genre`
+## 5.2 `Genre`
 
 ```js
 {
@@ -183,23 +162,23 @@ A interface exibe **Autor desconhecido**.
 }
 ```
 
----
+## 5.3 `BookSummary`
 
-## 7.3 `BookSummary`
+Usado em cards/listas.
 
 ```js
 {
   id: "uuid",
-  title: "Título da obra",
+  title: "Título",
 
   author: {
     id: "uuid",
     username: "autor",
-    displayName: "Nome do Autor",
+    displayName: "Nome",
     avatarUrl: null
   },
 
-  coverUrl: "https://.../cover.webp",
+  coverUrl: null,
   status: "published",
   publicationStatus: "ongoing",
   language: "pt-BR",
@@ -224,21 +203,19 @@ coverUrl
 publishedAt
 ```
 
----
-
-## 7.4 `BookDetail`
+## 5.4 `BookDetail`
 
 ```js
 {
   id: "uuid",
   authorId: "uuid",
-  title: "Título da obra",
+  title: "Título",
   description: "Descrição",
 
   author: {
     id: "uuid",
     username: "autor",
-    displayName: "Nome do Autor",
+    displayName: "Nome",
     avatarUrl: null
   },
 
@@ -255,8 +232,8 @@ publishedAt
     }
   ],
 
-  createdAt: "2026-08-24T...",
-  updatedAt: "2026-08-24T...",
+  createdAt: "...",
+  updatedAt: "...",
   publishedAt: null
 }
 ```
@@ -271,9 +248,7 @@ coverUrl
 publishedAt
 ```
 
----
-
-## 7.5 `Chapter`
+## 5.5 `Chapter`
 
 ```js
 {
@@ -283,23 +258,21 @@ publishedAt
   content: "Texto...",
   position: 1,
   status: "draft",
-  createdAt: "2026-08-24T...",
-  updatedAt: "2026-08-24T...",
+  createdAt: "...",
+  updatedAt: "...",
   publishedAt: null
 }
 ```
 
-A interface nunca define `position`.
+A UI não define `position`.
 
----
-
-## 7.6 `Favorite`
+## 5.6 `Favorite`
 
 ```js
 {
   userId: "uuid",
   bookId: "uuid",
-  createdAt: "2026-08-24T...",
+  createdAt: "...",
   book: {
     // BookSummary
   }
@@ -308,9 +281,9 @@ A interface nunca define `position`.
 
 ---
 
-# 8. Contratos de entrada
+# 6. Contratos de entrada
 
-## 8.1 Criar livro
+## 6.1 Criar livro
 
 ```js
 {
@@ -319,15 +292,7 @@ A interface nunca define `position`.
 }
 ```
 
-Opcionalmente:
-
-```js
-{
-  title: "Título",
-  description: "Descrição opcional",
-  genreIds: [5, 8]
-}
-```
+Descrição pode ser enviada opcionalmente.
 
 A UI não envia:
 
@@ -337,72 +302,60 @@ status
 publicationStatus
 ```
 
-## 8.2 Atualizar livro
+## 6.2 Atualizar livro
 
 ```js
 {
-  title,
-  description,
-  publicationStatus,
-  language,
-  genreIds
+  title?,
+  description?,
+  publicationStatus?,
+  language?,
+  genreIds?
 }
 ```
 
-Campos podem ser opcionais conforme a operação.
+Transferência de autoria não pertence a esse contrato.
 
-## 8.3 Criar capítulo
+## 6.3 Criar capítulo
 
 ```js
 {
-  title: "Título opcional",
-  content: "Conteúdo opcional/incompleto"
+  title?,
+  content?
 }
 ```
 
-A UI não envia:
+`bookId` é argumento separado do service.
 
-```text
-position
-authorId
-```
+A UI não envia `position` nem `authorId`.
 
-## 8.4 Atualizar capítulo
+## 6.4 Atualizar capítulo
 
 ```js
 {
-  title,
-  content
+  title?,
+  content?
 }
 ```
 
 ---
 
-# 9. Interfaces de `js/services/`
+# 7. Interfaces de `js/services/`
 
 ## `profileService`
 
 ```js
 getProfileByUsername(username)
-
 getMyProfile()
-
-updateMyProfile({
-  username,
-  displayName,
-  bio
-})
+updateMyProfile({ username, displayName, bio })
 ```
 
 ## `bookService`
 
 ```js
 listPublishedBooks(filters?)
-
 getPublishedBook(bookId)
-
 listMyBooks()
-
 getMyBook(bookId)
 
 createBook({
@@ -420,9 +373,7 @@ updateBook(bookId, {
 })
 
 publishBook(bookId)
-
 unpublishBook(bookId)
-
 deleteBook(bookId)
 ```
 
@@ -430,11 +381,8 @@ deleteBook(bookId)
 
 ```js
 listPublishedChapters(bookId)
-
 getPublishedChapter(chapterId)
-
 listMyChapters(bookId)
-
 getMyChapter(chapterId)
 
 createChapter(bookId, {
@@ -448,9 +396,7 @@ updateChapter(chapterId, {
 })
 
 publishChapter(chapterId)
-
 unpublishChapter(chapterId)
-
 deleteChapter(chapterId)
 ```
 
@@ -464,11 +410,8 @@ listGenres()
 
 ```js
 listFavorites()
-
 isFavorite(bookId)
-
 addFavorite(bookId)
-
 removeFavorite(bookId)
 ```
 
@@ -476,127 +419,74 @@ removeFavorite(bookId)
 
 ```js
 uploadAvatar(file)
-
 removeAvatar()
-
 uploadBookCover(bookId, file)
-
 removeBookCover(bookId)
 ```
 
-A página não precisa conhecer os paths físicos do Storage.
+Paths físicos e regras de upload pertencem a `11-Seguranca.md`.
 
 ---
 
-# 10. Estratégia de mocks
+# 8. Mocks
 
 Mocks simulam o **contrato do service**, não o schema bruto do banco.
 
-Mock e adapter Supabase devem devolver os mesmos:
+Mock e adapter Supabase devem manter:
 
-- nomes de propriedades;
-- tipos;
-- nulabilidade;
-- objetos aninhados;
-- listas;
-- formatos de erro.
+- mesmas propriedades;
+- mesmos tipos;
+- mesma nulabilidade;
+- mesmos objetos aninhados;
+- mesmos envelopes de resposta;
+- mesmos códigos de erro.
 
-Pode existir configuração equivalente a:
-
-```js
-export const DATA_SOURCE = "mock";
-```
-
-e futuramente:
+Configuração equivalente pode selecionar:
 
 ```js
-export const DATA_SOURCE = "supabase";
+DATA_SOURCE = "mock"
 ```
 
-A implementação exata pode mudar desde que a página não precise ser alterada.
+ou:
 
-Cenários mínimos:
-
-```text
-sucesso
-vazio
-erro
+```js
+DATA_SOURCE = "supabase"
 ```
 
-Quando aplicável:
+A implementação interna pode mudar sem exigir alteração das páginas.
 
-```text
-não autenticado
-não autorizado
-não encontrado
-```
+Cenários mínimos de mock:
+
+- sucesso;
+- vazio;
+- erro;
+- não autenticado, quando aplicável;
+- não autorizado, quando aplicável;
+- não encontrado, quando aplicável.
 
 ---
 
-# 11. Estados de UI
+# 9. Estados de interface
 
-## Loading
+`loading` é controlado pela `page`.
 
-Responsabilidade da page enquanto aguarda o service.
+Os demais estados derivam diretamente do contrato:
 
-## Sucesso
+| Estado | Representação |
+|---|---|
+| sucesso | `data != null`, `error = null` |
+| vazio | `data = []`, `error = null` |
+| não autenticado | `UNAUTHENTICATED` |
+| não autorizado | `FORBIDDEN` |
+| não encontrado | `NOT_FOUND` |
+| erro de rede | `NETWORK_ERROR` |
 
-```js
-{
-  data: [...],
-  error: null
-}
-```
-
-## Vazio
-
-```js
-{
-  data: [],
-  error: null
-}
-```
-
-Exemplos:
-
-- Meus Livros vazio;
-- Biblioteca vazia;
-- busca sem resultados;
-- nenhum capítulo publicado.
-
-## Não encontrado
-
-```js
-{
-  data: null,
-  error: {
-    code: "NOT_FOUND",
-    message: "Livro não encontrado."
-  }
-}
-```
-
-## Não autenticado
-
-```text
-UNAUTHENTICATED
-```
-
-## Não autorizado
-
-```text
-FORBIDDEN
-```
-
-## Erro recuperável
-
-```text
-NETWORK_ERROR
-```
+Fluxos visuais: `06-Fluxos-de-Usuario.md`.  
+Padrões visuais: `07-Design-System.md`.
 
 ---
 
-# 12. Exemplo de uso
+# 10. Exemplo
 
 ```js
 const result = await bookService.listPublishedBooks();
@@ -614,86 +504,44 @@ if (result.data.length === 0) {
 renderBooks(result.data);
 ```
 
-O mesmo código funciona com mock e Supabase.
+O mesmo código deve funcionar com mock e Supabase.
 
 ---
 
-# 13. Estrutura de arquivos prevista
+# 11. Organização física
 
-```text
-js/
-├── components/
-├── pages/
-├── services/
-│   ├── profile-service.js
-│   ├── book-service.js
-│   ├── chapter-service.js
-│   ├── genre-service.js
-│   ├── favorite-service.js
-│   ├── image-service.js
-│   ├── service-config.js
-│   └── adapters/
-│       ├── mock/
-│       │   ├── profile-adapter.js
-│       │   ├── book-adapter.js
-│       │   ├── chapter-adapter.js
-│       │   ├── genre-adapter.js
-│       │   ├── favorite-adapter.js
-│       │   └── image-adapter.js
-│       └── supabase/
-│           ├── profile-adapter.js
-│           ├── book-adapter.js
-│           ├── chapter-adapter.js
-│           ├── genre-adapter.js
-│           ├── favorite-adapter.js
-│           └── image-adapter.js
-└── mocks/
-    └── data.js
-```
+A estrutura de `pages/`, `components/`, `services/` e adapters é definida em `04-Arquitetura.md`.
 
-A organização pode ser refinada sem alterar os contratos públicos dos services.
+Este documento define **interfaces públicas**, não a disposição definitiva de cada arquivo.
 
 ---
 
-# 14. Critérios para alterar o contrato
+# 12. Mudança de contrato
 
-Uma mudança de contrato ocorre quando houver alteração de:
+Exige revisão do contrato quando mudar:
 
-- nome de propriedade consumida pela interface;
-- tipo de dado;
+- nome de propriedade consumida pela UI;
+- tipo;
 - nulabilidade relevante;
 - assinatura de service;
-- estrutura de retorno;
-- códigos de erro;
-- semântica de uma operação.
+- envelope de resposta;
+- código de erro;
+- semântica da operação.
 
-Mudanças internas de query, índices, joins ou implementação do adapter não exigem alteração do contrato se a interface externa permanecer igual.
-
----
-
-# 15. Checklist de integração
-
-Antes de substituir mock por Supabase:
-
-- [ ] assinatura do service permanece igual;
-- [ ] objetos retornados mantêm os mesmos campos;
-- [ ] nomes continuam em `camelCase`;
-- [ ] `null` continua representado da mesma forma;
-- [ ] lista vazia retorna `[]`;
-- [ ] erros são convertidos para códigos do contrato;
-- [ ] page não conhece Supabase;
-- [ ] components continuam independentes de persistência;
-- [ ] RLS e regras de negócio continuam sendo autoridade real.
+Mudanças internas de query, join, índice ou adapter não alteram o contrato se a interface externa permanecer igual.
 
 ---
 
-# 16. Critério de aceite do contrato 1.0
+# 13. Regra de compatibilidade
 
-O contrato será considerado aplicado quando:
+Antes de substituir um mock por Supabase, confirmar:
 
-1. a equipe de interface conseguir implementar páginas usando mocks estáveis;
-2. a troca de mock por Supabase não exigir reestruturação das páginas;
-3. responsabilidades entre `pages`, `services` e `components` estiverem claras;
-4. formatos de `profile`, `book`, `chapter`, `genre` e `favorite` estiverem documentados;
-5. assinaturas previstas dos services estiverem documentadas;
-6. estados de sucesso, vazio e erro estiverem definidos.
+- assinatura igual;
+- mesmos campos;
+- `camelCase` preservado;
+- `null` preservado;
+- vazio retorna `[]`;
+- erros são normalizados;
+- páginas não conhecem Supabase;
+- componentes não conhecem persistência;
+- RLS e banco continuam sendo autoridade real.
