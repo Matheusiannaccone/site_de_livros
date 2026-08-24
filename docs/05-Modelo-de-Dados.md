@@ -18,7 +18,8 @@ Mudanças posteriores no schema devem atualizar este documento e, quando relevan
 - constraints para impedir estados inválidos;
 - tabelas associativas para relações N:N;
 - RLS nas tabelas expostas;
-- validação de regras relevantes no frontend e novamente no banco;
+- Matriz RLS 1.0 como baseline de autorização do MVP;
+- validação de regras relevantes no frontend e novamente no banco/Storage;
 - normalização suficiente para evitar duplicação desnecessária;
 - leitura pública limitada a conteúdo publicado;
 - preservação opcional de obras após exclusão da conta do autor;
@@ -65,9 +66,13 @@ Perfil público/aplicacional associado ao usuário autenticado.
 | `username` | `text` | `NOT NULL`, `UNIQUE` |
 | `display_name` | `text` | `NOT NULL` |
 | `bio` | `text` | opcional |
-| `avatar_path` | `text` | opcional |
+| `avatar_path` | `text` | opcional; referência esperada para `avatars/{user_id}/avatar.webp` |
 | `created_at` | `timestamptz` | `NOT NULL`, default atual |
 | `updated_at` | `timestamptz` | `NOT NULL`, atualizado em alterações |
+
+No MVP, os campos de `profiles` são considerados públicos para leitura.
+
+Dados privados de autenticação não devem ser adicionados a essa tabela apenas por conveniência. Caso surjam campos privados futuros, sua exposição e modelagem deverão ser reavaliadas.
 
 ### 4.2 `books`
 
@@ -77,7 +82,7 @@ Perfil público/aplicacional associado ao usuário autenticado.
 | `author_id` | `uuid` | FK → `profiles.id`; obrigatório durante autoria ativa, mas a coluna admite `NULL` após preservação |
 | `title` | `text` | `NOT NULL` desde a criação |
 | `description` | `text` | opcional no rascunho; obrigatória para publicação |
-| `cover_path` | `text` | opcional |
+| `cover_path` | `text` | opcional; referência esperada para `covers/{book_id}/cover.webp` |
 | `status` | `text` | `NOT NULL`, default `draft`, `CHECK` controlado |
 | `publication_status` | `text` | `NOT NULL`, default `ongoing`, `CHECK` controlado |
 | `language` | `text` | `NOT NULL`, default `pt-BR` |
@@ -223,6 +228,8 @@ A contagem considera espaços e não inclui o título.
 
 Rascunhos podem possuir conteúdo menor que 500 caracteres ou ainda não possuir título definitivo.
 
+Para leitura pública, não basta `chapters.status = 'published'`: o livro pai também deve possuir `books.status = 'published'`.
+
 ### 4.4 `genres`
 
 | Campo | Tipo | Regra |
@@ -253,6 +260,8 @@ Lista inicial:
 | Terror | `terror` |
 | Ficção Histórica | `ficcao-historica` |
 | Fanfic | `fanfic` |
+
+Usuários terão somente leitura dessa tabela no MVP.
 
 ### 4.5 `book_genres`
 
@@ -291,6 +300,8 @@ Uma constraint simples por linha não consegue garantir sozinha a quantidade tot
 
 A migration deverá implementar mecanismo de banco adequado para impedir mais de 3 associações e garantir que a operação de criação não deixe um livro persistido com zero gêneros.
 
+A autorização de escrita em `book_genres` deriva da autoria do livro. `UPDATE` direto da associação não será utilizado no MVP; mudanças serão feitas por remoção e nova associação autorizadas.
+
 ### 4.6 `favorites`
 
 | Campo | Tipo | Regra |
@@ -308,6 +319,13 @@ PRIMARY KEY (user_id, book_id)
 Isso impede que o mesmo usuário favorite o mesmo livro duas vezes.
 
 A preservação de um livro após exclusão da conta do autor não remove favoritos de outros usuários.
+
+No MVP:
+
+- a biblioteca/favoritos é privada;
+- somente `user_id = auth.uid()` pode consultar, inserir ou excluir o próprio registro;
+- `UPDATE` não é necessário;
+- somente livros com `status = 'published'` podem ser adicionados aos favoritos.
 
 ## 5. Tabelas evolutivas
 
@@ -391,7 +409,7 @@ books → favorites
 ON DELETE CASCADE
 ```
 
-A remoção do arquivo de capa no Storage deve ser tratada pelo fluxo de aplicação correspondente.
+A remoção do arquivo de capa no Storage deve ser tratada pelo fluxo de aplicação correspondente e só pode ocorrer quando a autorização de autoria for válida.
 
 ### 7.2 Exclusão de capítulo
 
@@ -608,7 +626,25 @@ registro estruturalmente inválido
 
 ## 12. RLS
 
-Todas as tabelas expostas devem ter política definida.
+A baseline de autorização do MVP é a **Matriz RLS 1.0**, detalhada em `11-Seguranca.md`.
+
+### `profiles`
+
+```text
+SELECT:
+- público.
+
+INSERT:
+- somente usuário autenticado;
+- id = auth.uid().
+
+UPDATE:
+- somente o próprio usuário.
+
+DELETE:
+- negado diretamente ao cliente;
+- exclusão pelo fluxo protegido de conta.
+```
 
 ### `books`
 
@@ -619,19 +655,20 @@ SELECT:
 
 INSERT:
 - usuário autenticado;
-- autoria própria;
-- requisitos mínimos de criação respeitados.
+- author_id = auth.uid().
 
 UPDATE/DELETE:
 - somente autor enquanto author_id = auth.uid().
 ```
+
+Alterações comuns não podem transferir autoria nem definir `author_id = NULL`.
 
 ### `chapters`
 
 ```text
 SELECT:
 - capítulo publicado de obra publicada: público;
-- rascunho: apenas autor da obra.
+- demais capítulos: apenas autor da obra.
 
 INSERT/UPDATE/DELETE:
 - apenas autor da obra.
@@ -639,21 +676,68 @@ INSERT/UPDATE/DELETE:
 
 A regra especial de exclusão sequencial deve ser aplicada no fluxo protegido de remoção.
 
+### `genres`
+
+```text
+SELECT:
+- público.
+
+INSERT/UPDATE/DELETE:
+- negado para usuários comuns.
+```
+
+### `book_genres`
+
+```text
+SELECT:
+- público quando a obra está publicada;
+- autor pode consultar associações das próprias obras.
+
+INSERT/DELETE:
+- somente autor da obra.
+
+UPDATE:
+- não utilizado/negado no MVP.
+```
+
 ### `favorites`
 
 ```text
-INSERT/DELETE:
-- somente o próprio usuário.
-
 SELECT:
-- conforme política de privacidade definida para biblioteca.
+- somente user_id = auth.uid().
+
+INSERT:
+- somente user_id = auth.uid();
+- livro deve estar published.
+
+UPDATE:
+- não utilizado no MVP.
+
+DELETE:
+- somente user_id = auth.uid().
 ```
 
 Obras preservadas com `author_id = NULL` continuam legíveis quando publicadas, mas não podem ser alteradas por usuários comuns.
 
-Detalhes adicionais ficam em `11-Seguranca.md`.
+## 13. Referências de Storage no modelo
 
-## 13. Modelo visual
+Os arquivos não fazem parte das tabelas principais; somente seus caminhos são persistidos.
+
+Estrutura aprovada:
+
+```text
+profiles.avatar_path
+→ avatars/{user_id}/avatar.webp
+
+books.cover_path
+→ covers/{book_id}/cover.webp
+```
+
+Os buckets serão públicos para leitura, mas mutações serão protegidas pelas policies do Supabase Storage.
+
+O fato de uma capa possuir URL pública não altera a visibilidade do registro `books`.
+
+## 14. Modelo visual
 
 O DER do MVP deve representar:
 
@@ -674,7 +758,7 @@ O DER do MVP deve representar:
 
 O DER deve permanecer sincronizado com o banco real implementado.
 
-## 14. Melhorias pós-MVP relacionadas ao modelo
+## 15. Melhorias pós-MVP relacionadas ao modelo
 
 Ficam explicitamente fora do MVP:
 
@@ -684,4 +768,6 @@ Ficam explicitamente fora do MVP:
 - mecanismo de renumeração/reorganização;
 - fluxo explícito de publicação por função/RPC `publish_book()`;
 - interface completa de múltiplos idiomas;
-- tabelas evolutivas descritas na seção 5.
+- tabelas evolutivas descritas na seção 5;
+- eventual revisão da Matriz RLS para versões `1.X`;
+- buckets privados caso surja requisito real de confidencialidade de assets.
