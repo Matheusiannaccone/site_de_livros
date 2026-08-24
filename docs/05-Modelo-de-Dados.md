@@ -624,7 +624,79 @@ registro estruturalmente inválido
 → não permitido
 ```
 
-## 12. RLS
+## 12. Contrato de dados para o frontend
+
+O schema físico permanece em `snake_case`, mas o frontend não deve depender diretamente desse formato.
+
+Os services/adapters transformarão registros do Supabase nos objetos estáveis definidos em `14-Contrato-Front-Supabase.md`.
+
+Exemplos:
+
+```text
+profiles.display_name
+→ profile.displayName
+
+books.author_id
+→ book.authorId
+
+books.publication_status
+→ book.publicationStatus
+
+books.cover_path
+→ book.coverUrl
+
+profiles.avatar_path
+→ profile.avatarUrl
+```
+
+Relacionamentos usados pela interface, como autor e gêneros de uma obra, podem ser entregues como objetos aninhados pelo service para evitar que páginas conheçam joins ou consultas adicionais.
+
+### 12.1 Objetos principais
+
+O contrato 1.0 define:
+
+- `Profile`;
+- `ProfileSummary`;
+- `Genre`;
+- `BookSummary`;
+- `BookDetail`;
+- `Chapter`;
+- `Favorite`.
+
+Esses objetos são contratos da aplicação e não novas tabelas.
+
+### 12.2 Entradas de criação e edição
+
+A interface não deve enviar campos cuja autoridade pertence à sessão ou ao banco.
+
+```text
+createBook
+→ não recebe authorId
+→ não recebe status
+
+createChapter
+→ não recebe authorId
+→ não recebe position
+```
+
+A autoria deriva de `auth.uid()` e a posição do capítulo é atribuída pelo banco.
+
+### 12.3 Listas vazias
+
+Uma consulta válida sem registros deve retornar:
+
+```js
+{
+  data: [],
+  error: null
+}
+```
+
+A ausência de resultados não deve ser representada como erro.
+
+---
+
+## 13. RLS
 
 A baseline de autorização do MVP é a **Matriz RLS 1.0**, detalhada em `11-Seguranca.md`.
 
@@ -719,7 +791,7 @@ DELETE:
 
 Obras preservadas com `author_id = NULL` continuam legíveis quando publicadas, mas não podem ser alteradas por usuários comuns.
 
-## 13. Referências de Storage no modelo
+## 14. Referências de Storage no modelo
 
 Os arquivos não fazem parte das tabelas principais; somente seus caminhos são persistidos.
 
@@ -737,7 +809,7 @@ Os buckets serão públicos para leitura, mas mutações serão protegidas pelas
 
 O fato de uma capa possuir URL pública não altera a visibilidade do registro `books`.
 
-## 14. Modelo visual
+## 15. Modelo visual
 
 O DER do MVP deve representar:
 
@@ -758,7 +830,7 @@ O DER do MVP deve representar:
 
 O DER deve permanecer sincronizado com o banco real implementado.
 
-## 15. Melhorias pós-MVP relacionadas ao modelo
+## 16. Melhorias pós-MVP relacionadas ao modelo
 
 Ficam explicitamente fora do MVP:
 

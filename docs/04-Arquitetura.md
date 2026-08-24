@@ -77,16 +77,101 @@ Os nomes de páginas poderão mudar durante a implementação sem alterar os pri
 Código específico da inicialização e interação de cada página.
 
 **`js/services/`**  
-Acesso a autenticação, banco, Storage e operações reutilizáveis.
+Define o contrato estável de acesso a dados e operações da aplicação.
+
+As páginas e componentes não devem conhecer detalhes do Supabase nem chamar diretamente `supabase.from()`, `supabase.auth` ou `supabase.storage`.
+
+Os services expõem assinaturas estáveis e delegam a implementação a adapters de mock ou Supabase.
 
 **`js/components/`**  
 Comportamentos e componentes de interface reutilizáveis.
+
+Componentes recebem dados já normalizados pelos services e não acessam banco, Auth ou Storage diretamente.
 
 **`css/global.css`**  
 Tokens, reset, tipografia e estilos globais.
 
 **`css/components.css`**  
 Botões, cards, formulários, navegação e outros padrões reutilizáveis.
+
+
+### 3.4 Contrato Front ↔ Supabase
+
+A comunicação entre interface e dados seguirá o **Contrato Front ↔ Supabase 1.0**, documentado em `14-Contrato-Front-Supabase.md`.
+
+```text
+PAGE
+  ↓
+SERVICE
+  ↓
+adapter ativo
+  ├── mock
+  └── supabase
+```
+
+A página deve chamar o mesmo service independentemente da origem dos dados.
+
+Exemplo:
+
+```js
+const result = await bookService.listPublishedBooks();
+```
+
+Durante prototipação, o service pode utilizar mock. Após integração, o mesmo contrato passa a utilizar Supabase sem exigir reestruturação da página.
+
+### 3.5 Organização dos services
+
+```text
+js/
+├── components/
+├── pages/
+├── services/
+│   ├── profile-service.js
+│   ├── book-service.js
+│   ├── chapter-service.js
+│   ├── genre-service.js
+│   ├── favorite-service.js
+│   ├── image-service.js
+│   ├── service-config.js
+│   └── adapters/
+│       ├── mock/
+│       └── supabase/
+└── mocks/
+    └── data.js
+```
+
+### 3.6 Convenção de dados
+
+O PostgreSQL/Supabase mantém nomes em `snake_case`.
+
+Os objetos entregues pelos services às páginas utilizarão `camelCase`.
+
+```text
+Banco:
+display_name
+publication_status
+cover_path
+
+Aplicação:
+displayName
+publicationStatus
+coverUrl
+```
+
+A conversão é responsabilidade do adapter/service.
+
+### 3.7 Responsabilidades entre camadas
+
+| Camada | Responsabilidade | Não deve fazer |
+|---|---|---|
+| `pages/` | coordenar página, loading, eventos e navegação | consultar Supabase diretamente |
+| `components/` | renderizar e atualizar UI reutilizável | aplicar regras de persistência |
+| `services/` | expor contratos de dados e operações | manipular DOM |
+| adapter `mock` | simular o contrato aprovado | alterar formato esperado pela UI |
+| adapter `supabase` | traduzir Supabase para o contrato da aplicação | conhecer estrutura visual |
+| PostgreSQL/RLS/Storage | integridade e autorização real | cuidar de UX |
+
+> `pages/` e `components/` não devem depender da implementação concreta da fonte de dados.
 
 ## 4. Backend as a Service
 
@@ -355,16 +440,22 @@ Formulário HTML
     ↓
 Validação de interface
     ↓
-service de livros
+bookService.createBook()
     ↓
-Supabase SDK
-    ↓
-PostgreSQL
-    ↓
-RLS valida usuário
-    ↓
-INSERT permitido ou negado
+adapter ativo
+    ├── mock → resposta simulada
+    └── supabase
+            ↓
+        Supabase SDK
+            ↓
+        PostgreSQL
+            ↓
+        RLS valida usuário
+            ↓
+        INSERT permitido ou negado
 ```
+
+A página recebe sempre o formato definido pelo contrato, independentemente do adapter ativo.
 
 ### Enviar capa
 
