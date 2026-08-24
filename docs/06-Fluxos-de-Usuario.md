@@ -109,7 +109,7 @@ Perfil / Meus livros
   ↓
 Novo livro
   ↓
-Título + descrição + gênero + capa
+Título + gênero (descrição + capa opcionais na criação, obrigatórios na publicação)
   ↓
 Salvar
   ↓

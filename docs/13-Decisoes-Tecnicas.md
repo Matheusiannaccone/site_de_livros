@@ -1158,6 +1158,169 @@ A conversão client-side é otimização e UX; não é mecanismo de segurança.
 
 ---
 
+---
+
+# ADR-026 — Contrato Front ↔ Supabase 1.0
+
+**Status:** Aceito
+
+## Contexto
+
+Frontend e integração com Supabase serão desenvolvidos em paralelo por membros diferentes da equipe.
+
+Se páginas consumirem diretamente respostas brutas do Supabase, alterações de query, join, nomenclatura ou integração poderão obrigar a reescrita da interface.
+
+## Alternativas consideradas
+
+1. páginas chamarem Supabase diretamente;
+2. cada página definir seu próprio formato de mock;
+3. services com contratos estáveis e adapters intercambiáveis.
+
+## Decisão
+
+Adotar a terceira alternativa.
+
+```text
+page
+  ↓
+service
+  ↓
+adapter
+  ├── mock
+  └── supabase
+```
+
+A baseline será:
+
+```text
+Contrato Front ↔ Supabase 1.0
+```
+
+Detalhes em `14-Contrato-Front-Supabase.md`.
+
+Banco/Supabase utiliza `snake_case`; objetos entregues à aplicação usam `camelCase`.
+
+Resposta padrão:
+
+```js
+{
+  data: ...,
+  error: null
+}
+```
+
+Erro:
+
+```js
+{
+  data: null,
+  error: {
+    code: "ERROR_CODE",
+    message: "Mensagem adequada à aplicação."
+  }
+}
+```
+
+Lista vazia:
+
+```js
+{
+  data: [],
+  error: null
+}
+```
+
+## Consequências
+
+- interface pode avançar com mocks;
+- troca para Supabase não exige reestruturação das páginas;
+- detalhes de query ficam isolados;
+- erros técnicos são normalizados;
+- mocks precisam permanecer sincronizados com o contrato.
+
+---
+
+# ADR-027 — Services como única fronteira de acesso a dados no frontend
+
+**Status:** Aceito
+
+**Refina:** ADR-001, ADR-003, ADR-012 e ADR-026.
+
+## Decisão
+
+Arquivos de `pages/` e `components/` não devem realizar chamadas diretas a:
+
+```text
+supabase.from()
+supabase.auth
+supabase.storage
+```
+
+Essas operações ficam encapsuladas em `js/services/` e seus adapters.
+
+Services previstos:
+
+```text
+profileService
+bookService
+chapterService
+genreService
+favoriteService
+imageService
+```
+
+## Consequências
+
+- páginas coordenam UI e estados;
+- componentes permanecem reutilizáveis;
+- services concentram integração;
+- adapters podem evoluir sem alterar a estrutura das páginas.
+
+---
+
+# ADR-028 — Mocks orientados pelo contrato
+
+**Status:** Aceito
+
+**Refina:** ADR-026.
+
+## Decisão
+
+Mocks devem reproduzir exatamente:
+
+- nomes de propriedades;
+- tipos;
+- nulabilidade;
+- objetos aninhados;
+- listas;
+- formato de sucesso;
+- formato de vazio;
+- códigos de erro
+
+definidos no Contrato Front ↔ Supabase 1.0.
+
+Mocks simulam a resposta dos services, não o schema físico do PostgreSQL.
+
+Estados mínimos:
+
+```text
+sucesso
+vazio
+erro
+não autenticado
+não autorizado
+não encontrado
+```
+
+quando aplicável.
+
+## Consequências
+
+- UI pode ser validada antes da integração;
+- casos vazios e de erro não dependem de falhas reais;
+- mocks se tornam ferramenta de desenvolvimento e teste.
+
+
 # 2. Decisões pendentes
 
 Registrar novos ADRs quando forem definidas:
