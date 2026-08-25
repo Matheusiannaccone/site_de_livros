@@ -15,3 +15,9 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Node modules
+node_modules/
+
+# Supabase temporary files
+supabase/.temp/
