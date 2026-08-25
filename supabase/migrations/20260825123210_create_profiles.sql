@@ -136,4 +136,4 @@ $$;
 create trigger on_profiles_updated
 before update on public.profiles
 for each row
-execute function public.handle_updated_user_at();
+execute function public.handle_updated_user();
