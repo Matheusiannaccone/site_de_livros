@@ -3,24 +3,55 @@ create table public.profiles (
 
   username text not null unique
     check (
-      username = lower(username)
+      char_length(username) between 3 and 30
+      and username = lower(username)
       and username = btrim(username)
-      and username <> ''
+      and username ~ '^[a-z0-9._]+$'
     ),
 
   display_name text not null
     check (
-      display_name = btrim(display_name)
-      and display_name <> ''
+      char_length(display_name) between 1 and 60
+      and display_name = btrim(display_name)
     ),
 
-  bio text,
+  bio text
+    check (
+      bio is null
+      or char_length(bio) <= 500
+    ),
 
   avatar_path text,
 
   created_at timestamptz not null default now(),
 
   updated_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+create policy "profiles_select_public"
+on public.profiles
+for select
+using (true);
+
+create policy "profiles_insert_own"
+on public.profiles
+for insert
+to authenticated
+with check (
+  id = auth.uid()
+);
+
+create policy "profiles_update_own"
+on public.profiles
+for update
+to authenticated
+using (
+  id = auth.uid()
+)
+with check (
+  id = auth.uid()
 );
 
 create or replace function public.handle_new_user()
@@ -40,6 +71,11 @@ begin
     raise exception 'username is required';
   end if;
 
+  if char_length(v_username) < 3
+     or char_length(v_username) > 30 then
+    raise exception 'username must contain between 3 and 30 characters';
+  end if;
+
   if v_username <> btrim(v_username) then
     raise exception 'username cannot contain leading or trailing spaces';
   end if;
@@ -48,8 +84,17 @@ begin
     raise exception 'username must use lowercase characters';
   end if;
 
-  if v_display_name is null or btrim(v_display_name) = '' then
+  if v_username !~ '^[a-z0-9._]+$' then
+    raise exception 'username contains invalid characters';
+  end if;
+
+  if v_display_name is null
+     or btrim(v_display_name) = '' then
     raise exception 'display_name is required';
+  end if;
+
+  if char_length(v_display_name) > 60 then
+    raise exception 'display_name must contain at most 60 characters';
   end if;
 
   if v_display_name <> btrim(v_display_name) then
@@ -83,6 +128,7 @@ set search_path = ''
 as $$
 begin
   new.updated_at := now();
+
   return new;
 end;
 $$;
