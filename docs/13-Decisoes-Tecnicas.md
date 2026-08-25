@@ -362,6 +362,67 @@ Sem `CHECK` fechado para idiomas.
 
 ---
 
+# ADR-029 — Criação automática de `profiles`
+
+**Status:** Aceito
+
+**Contexto:** `profiles` possui relação 1:1 com `auth.users` e campos obrigatórios necessários à aplicação.
+
+**Alternativas:** criar `profiles` manualmente pelo frontend após `signUp`; criar automaticamente por trigger.
+
+**Decisão:** criar `profiles` automaticamente por trigger associado à criação em `auth.users`.
+
+O cadastro envia `username` e `displayName`, e esses valores são disponibilizados ao trigger por metadata do usuário.
+
+O frontend não executa `INSERT profiles` como etapa normal do cadastro.
+
+**Consequências:** a responsabilidade de manter a relação 1:1 fica centralizada no banco e reduz o risco de identidade criada sem profile correspondente.
+
+---
+
+# ADR-030 — Adapters internos à camada de services
+
+**Status:** Aceito
+
+**Contexto:** os adapters existem para permitir implementações mock e Supabase sem expor detalhes de persistência às páginas.
+
+**Alternativas:** `js/adapters/` como camada de mesmo nível; `js/services/adapters/` como detalhe interno dos services.
+
+**Decisão:**
+
+```text
+js/services/adapters/
+├── mock/
+└── supabase/
+```
+
+`pages/` e `components/` não importam adapters diretamente.
+
+**Consequências:** a estrutura física reforça a fronteira `PAGE → SERVICE → ADAPTER` e reduz a chance de acoplamento direto da UI ao Supabase.
+
+---
+
+# ADR-031 — Seleção temporária de datasource por hostname
+
+**Status:** Aceito
+
+**Contexto:** durante a fase atual é desejável alternar automaticamente entre mock local e Supabase publicado sem editar o código a cada teste.
+
+**Alternativas:** alteração manual de constante; variável de ambiente; seleção por hostname.
+
+**Decisão:**
+
+```text
+localhost / 127.0.0.1 → mock
+outros hostnames       → supabase
+```
+
+A seleção deve permanecer centralizada.
+
+**Consequências:** desenvolvimento local utiliza mocks automaticamente e Vercel/produção utiliza Supabase real. Se houver necessidade de testar Supabase real em localhost, essa estratégia deverá ser revisada.
+
+---
+
 # 2. Decisões pendentes
 
 Criar novos ADRs quando forem fechadas decisões sobre:

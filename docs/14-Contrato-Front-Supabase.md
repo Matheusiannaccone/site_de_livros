@@ -32,6 +32,16 @@ const result = await bookService.listPublishedBooks();
 
 A chamada permanece igual com mock ou Supabase.
 
+Adapters ficam em:
+
+```text
+js/services/adapters/
+├── mock/
+└── supabase/
+```
+
+Páginas e componentes não importam adapters diretamente.
+
 ---
 
 ## 3. Convenções
@@ -279,11 +289,41 @@ A UI não define `position`.
 }
 ```
 
+## 5.7 `AuthSession`
+
+Quando aplicável, operações de autenticação podem retornar dados normalizados de sessão/usuário necessários à aplicação.
+
+A UI não deve depender do formato bruto retornado pelo SDK do Supabase.
+
 ---
 
 # 6. Contratos de entrada
 
-## 6.1 Criar livro
+## 6.1 Cadastro
+
+```js
+{
+  email,
+  password,
+  username,
+  displayName
+}
+```
+
+`username` e `displayName` são enviados junto ao cadastro e disponibilizados ao trigger responsável por criar `profiles`.
+
+A página não executa `INSERT` separado em `profiles`.
+
+## 6.2 Login
+
+```js
+{
+  email,
+  password
+}
+```
+
+## 6.3 Criar livro
 
 ```js
 {
@@ -302,7 +342,7 @@ status
 publicationStatus
 ```
 
-## 6.2 Atualizar livro
+## 6.4 Atualizar livro
 
 ```js
 {
@@ -316,7 +356,7 @@ publicationStatus
 
 Transferência de autoria não pertence a esse contrato.
 
-## 6.3 Criar capítulo
+## 6.5 Criar capítulo
 
 ```js
 {
@@ -329,7 +369,7 @@ Transferência de autoria não pertence a esse contrato.
 
 A UI não envia `position` nem `authorId`.
 
-## 6.4 Atualizar capítulo
+## 6.6 Atualizar capítulo
 
 ```js
 {
@@ -341,6 +381,42 @@ A UI não envia `position` nem `authorId`.
 ---
 
 # 7. Interfaces de `js/services/`
+
+## `authService`
+
+```js
+signUp({
+  email,
+  password,
+  username,
+  displayName
+})
+
+signIn({
+  email,
+  password
+})
+
+signOut()
+
+getSession()
+
+getCurrentUser()
+
+onAuthStateChange(callback)
+```
+
+Responsabilidades:
+
+- manter interface estável para as páginas;
+- utilizar o adapter selecionado;
+- normalizar respostas e erros;
+- não expor erro bruto do Supabase;
+- não duplicar criação manual de `profiles`.
+
+O adapter Supabase é responsável pelas chamadas concretas a `supabase.auth`.
+
+O adapter mock deve reproduzir o mesmo contrato externo.
 
 ## `profileService`
 
@@ -428,7 +504,24 @@ Paths físicos e regras de upload pertencem a `11-Seguranca.md`.
 
 ---
 
-# 8. Mocks
+# 8. Seleção de adapter
+
+Durante a fase atual, a seleção do datasource ocorre automaticamente por hostname:
+
+```text
+localhost / 127.0.0.1 → mock
+outros hostnames       → supabase
+```
+
+Essa seleção deve ficar centralizada.
+
+Services e páginas não devem exigir alteração para alternar entre mock e Supabase.
+
+Se houver necessidade futura de usar Supabase real em localhost, a estratégia poderá ser substituída por configuração explícita sem alterar o contrato público dos services.
+
+---
+
+# 9. Mocks
 
 Mocks simulam o **contrato do service**, não o schema bruto do banco.
 
@@ -441,20 +534,6 @@ Mock e adapter Supabase devem manter:
 - mesmos envelopes de resposta;
 - mesmos códigos de erro.
 
-Configuração equivalente pode selecionar:
-
-```js
-DATA_SOURCE = "mock"
-```
-
-ou:
-
-```js
-DATA_SOURCE = "supabase"
-```
-
-A implementação interna pode mudar sem exigir alteração das páginas.
-
 Cenários mínimos de mock:
 
 - sucesso;
@@ -464,9 +543,19 @@ Cenários mínimos de mock:
 - não autorizado, quando aplicável;
 - não encontrado, quando aplicável.
 
+Para autenticação, o mock deve reproduzir ao menos:
+
+- cadastro válido;
+- cadastro inválido;
+- login válido;
+- credenciais inválidas;
+- sessão existente;
+- ausência de sessão;
+- logout.
+
 ---
 
-# 9. Estados de interface
+# 10. Estados de interface
 
 `loading` é controlado pela `page`.
 
@@ -486,7 +575,35 @@ Padrões visuais: `07-Design-System.md`.
 
 ---
 
-# 10. Exemplo
+# 11. Normalização de erros de autenticação
+
+O frontend não deve receber mensagens internas do Supabase diretamente.
+
+Casos como:
+
+- credenciais inválidas;
+- e-mail já utilizado;
+- username conflitante;
+- dados obrigatórios ausentes;
+- falha de rede;
+- sessão inexistente;
+- erro inesperado;
+
+devem ser convertidos para os códigos definidos no contrato, principalmente:
+
+```text
+VALIDATION_ERROR
+CONFLICT
+UNAUTHENTICATED
+NETWORK_ERROR
+UNKNOWN_ERROR
+```
+
+A mensagem apresentada ao usuário deve ser adequada ao contexto da aplicação.
+
+---
+
+# 12. Exemplo
 
 ```js
 const result = await bookService.listPublishedBooks();
@@ -508,15 +625,15 @@ O mesmo código deve funcionar com mock e Supabase.
 
 ---
 
-# 11. Organização física
+# 13. Organização física
 
 A estrutura de `pages/`, `components/`, `services/` e adapters é definida em `04-Arquitetura.md`.
 
-Este documento define **interfaces públicas**, não a disposição definitiva de cada arquivo.
+Este documento define **interfaces públicas**, não a disposição definitiva de cada arquivo além da fronteira arquitetural acordada.
 
 ---
 
-# 12. Mudança de contrato
+# 14. Mudança de contrato
 
 Exige revisão do contrato quando mudar:
 
@@ -532,7 +649,7 @@ Mudanças internas de query, join, índice ou adapter não alteram o contrato se
 
 ---
 
-# 13. Regra de compatibilidade
+# 15. Regra de compatibilidade
 
 Antes de substituir um mock por Supabase, confirmar:
 

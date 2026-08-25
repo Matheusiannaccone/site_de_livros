@@ -53,6 +53,9 @@ Estrutura-alvo:
 │   ├── components/
 │   ├── pages/
 │   └── services/
+│       └── adapters/
+│           ├── mock/
+│           └── supabase/
 ├── index.html
 ├── login.html
 ├── cadastro.html
@@ -72,10 +75,19 @@ Estrutura-alvo:
 |---|---|
 | `js/pages/` | inicialização, eventos, navegação e estados específicos da página |
 | `js/components/` | UI reutilizável |
-| `js/services/` | contratos e operações de acesso a dados/Auth/Storage |
-| adapters | implementação concreta mock ou Supabase |
+| `js/services/` | contratos públicos consumidos pelas páginas e componentes |
+| `js/services/adapters/` | implementação concreta dos services usando mock ou Supabase |
 | `css/global.css` | tokens, reset, tipografia e estilos globais |
 | `css/components.css` | componentes visuais reutilizáveis |
+
+Os adapters são detalhes internos da camada de services.
+
+Regras:
+
+- `pages/` e `components/` importam services;
+- services podem importar adapters;
+- `pages/` e `components/` não importam adapters diretamente;
+- adapters não constituem API pública da interface.
 
 ### 3.4 Fronteira Front ↔ Supabase
 
@@ -92,6 +104,15 @@ ADAPTER
 `pages/` e `components/` não devem chamar Supabase diretamente.
 
 Formatos de dados, assinaturas de services, respostas e mocks: `14-Contrato-Front-Supabase.md`.
+
+A seleção temporária do datasource é feita por hostname:
+
+```text
+localhost / 127.0.0.1 → mock
+outros hostnames       → supabase
+```
+
+Essa regra deve permanecer centralizada e não deve exigir alteração das páginas ou dos services para alternar entre mock e Supabase.
 
 ## 4. Backend as a Service
 
@@ -128,6 +149,8 @@ RLS no PostgreSQL e policies do Storage são responsáveis pela autorização.
 A Matriz RLS vigente e as regras de Storage ficam exclusivamente em `11-Seguranca.md`.
 
 A interface pode ocultar ações indisponíveis para melhorar UX, mas isso não substitui autorização.
+
+No cadastro, a identidade é criada no Supabase Auth e o respectivo registro em `profiles` é criado automaticamente por trigger no banco, conforme `05-Modelo-de-Dados.md` e `13-Decisoes-Tecnicas.md`.
 
 ## 7. Storage
 
