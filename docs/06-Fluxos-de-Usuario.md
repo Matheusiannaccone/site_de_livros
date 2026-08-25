@@ -35,14 +35,22 @@ Home/Login
   ↓
 Cadastro
   ↓
-Preencher dados
+email + password + username + displayName
   ↓
-Criar identidade no Auth
+Supabase Auth cria auth.users
   ↓
-Criar perfil
+trigger cria profiles
   ↓
-Sessão autenticada
+cadastro concluído
+  ↓
+sessão autenticada
 ```
+
+No MVP atual, `enable_confirmations = false`.
+
+Assim, um cadastro válido não exige confirmação de e-mail antes da sessão inicial.
+
+A página não cria `profiles` diretamente. A criação do perfil é responsabilidade do trigger associado ao fluxo de criação de `auth.users`.
 
 ### 2.3 Login
 

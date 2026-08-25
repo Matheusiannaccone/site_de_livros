@@ -60,6 +60,21 @@ Após preservação de obras na exclusão da conta, `books.author_id` pode ficar
 
 `profiles` contém apenas dados aplicacionais públicos no MVP. Dados privados de autenticação não pertencem a essa tabela.
 
+A criação do registro de `profiles` será automática por trigger após a criação correspondente em `auth.users`.
+
+No cadastro, `username` e `display_name` devem ser fornecidos junto aos dados necessários ao Supabase Auth e disponibilizados ao trigger por metadata do usuário.
+
+A aplicação cliente não deve executar um `INSERT` separado em `profiles` como etapa normal do cadastro.
+
+Invariante do fluxo:
+
+```text
+nova identidade utilizada pela aplicação
+→ deve possuir profile correspondente
+```
+
+A implementação do trigger deve impedir que o cadastro conclua de forma inconsistente quando os dados obrigatórios do profile não puderem ser criados.
+
 ### 4.2 `books`
 
 | Campo | Tipo | Regra |
@@ -268,6 +283,10 @@ Full Text Search e ranking por relevância serão avaliados quando a busca real 
 ## 10. Integridade resumida
 
 ```text
+profiles.id → PK/FK auth.users.id
+profiles.username → UNIQUE
+profiles criado automaticamente por trigger de auth.users
+
 genres.id → integer PK
 genres.name → UNIQUE
 genres.slug → UNIQUE

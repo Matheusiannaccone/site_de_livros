@@ -6,13 +6,19 @@
 
 Usado para implementação.
 
+Durante a fase atual, `localhost` e `127.0.0.1` utilizam automaticamente os adapters mock.
+
 ### Preview
 
 Quando disponível pela Vercel, usado para revisão de branches/PRs.
 
+Previews utilizam Supabase real conforme a regra de seleção por hostname.
+
 ### Produção
 
 Versão integrada da `main`.
+
+Produção utiliza Supabase real.
 
 ## 2. Serviços externos
 
@@ -51,6 +57,19 @@ Se houver funções server-side, seus segredos ficam no ambiente protegido da Ve
 
 Segurança de chaves: `11-Seguranca.md`.
 
+### 4.1 Seleção temporária de datasource
+
+Durante a fase atual:
+
+```text
+localhost / 127.0.0.1 → mock
+outros hostnames       → supabase
+```
+
+A regra deve ser centralizada para que páginas e services não precisem ser modificados ao alternar entre fontes de dados.
+
+Se futuramente houver necessidade de testar Supabase real em localhost, essa estratégia deverá ser revisada.
+
 ## 5. Deploy
 
 ```text
@@ -83,6 +102,14 @@ Preferir:
 - revisão antes de mudanças destrutivas.
 
 Rollback de frontend não desfaz automaticamente alterações no banco.
+
+### 6.1 Seeds
+
+O arquivo `supabase/seed.sql` deve existir como ponto versionado para dados iniciais reproduzíveis.
+
+Ele pode permanecer sem `INSERT`s enquanto não houver tabelas com dados estáticos a popular.
+
+Quando tabelas controladas, como `genres`, entrarem no schema, seus dados iniciais poderão ser adicionados ao seed conforme necessidade.
 
 ## 7. Dados de demonstração
 
