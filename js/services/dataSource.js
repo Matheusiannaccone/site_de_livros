@@ -7,3 +7,11 @@ export function getDataSource() {
 
   return "supabase";
 }
+
+export function getAuthAdapter() {
+  if (getDataSource() === "mock") {
+    return mockAuthAdapter;
+  }
+
+  return supabaseAuthAdapter;
+}
