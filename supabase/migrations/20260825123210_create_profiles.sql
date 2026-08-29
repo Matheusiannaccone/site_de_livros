@@ -8,11 +8,7 @@ create table public.profiles (
       and username <> ''
     ),
 
-  display_name text not null
-    check (
-      display_name = btrim(display_name)
-      and display_name <> ''
-    ),
+  display_name text not null,
 
   bio text,
 
@@ -52,10 +48,6 @@ begin
     raise exception 'display_name is required';
   end if;
 
-  if v_display_name <> btrim(v_display_name) then
-    raise exception 'display_name cannot contain leading or trailing spaces';
-  end if;
-
   insert into public.profiles (
     id,
     username,
@@ -75,19 +67,3 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row
 execute function public.handle_new_user();
-
-create or replace function public.handle_updated_user_at()
-returns trigger
-language plpgsql
-set search_path = ''
-as $$
-begin
-  new.updated_at := now();
-  return new;
-end;
-$$;
-
-create trigger on_profiles_updated
-before update on public.profiles
-for each row
-execute function public.handle_updated_user_at();
