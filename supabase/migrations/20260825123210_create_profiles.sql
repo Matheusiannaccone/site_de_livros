@@ -1,21 +1,10 @@
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-
-  username text not null unique
-    check (
-      username = lower(username)
-      and username = btrim(username)
-      and username <> ''
-    ),
-
+  username text not null unique,
   display_name text not null,
-
   bio text,
-
   avatar_path text,
-
   created_at timestamptz not null default now(),
-
   updated_at timestamptz not null default now()
 );
 
@@ -25,29 +14,7 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
-declare
-  v_username text;
-  v_display_name text;
 begin
-  v_username := new.raw_user_meta_data ->> 'username';
-  v_display_name := new.raw_user_meta_data ->> 'display_name';
-
-  if v_username is null or btrim(v_username) = '' then
-    raise exception 'username is required';
-  end if;
-
-  if v_username <> btrim(v_username) then
-    raise exception 'username cannot contain leading or trailing spaces';
-  end if;
-
-  if v_username <> lower(v_username) then
-    raise exception 'username must use lowercase characters';
-  end if;
-
-  if v_display_name is null or btrim(v_display_name) = '' then
-    raise exception 'display_name is required';
-  end if;
-
   insert into public.profiles (
     id,
     username,
@@ -55,8 +22,8 @@ begin
   )
   values (
     new.id,
-    v_username,
-    v_display_name
+    new.raw_user_meta_data ->> 'username',
+    new.raw_user_meta_data ->> 'display_name'
   );
 
   return new;
