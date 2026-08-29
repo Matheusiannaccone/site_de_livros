@@ -13,6 +13,86 @@ const mockUsers = [
 
 export const mockAuthAdapter = {
   async signUp({ email, password, username, displayName }) {
+    if (!email || !password || !username || !displayName) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "Preencha todos os campos obrigatórios."
+        }
+        };
+    }
+
+    if (password.length < 6) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "A senha deve conter pelo menos 6 caracteres."
+        }
+        };
+    }
+
+    if (username.length < 3 || username.length > 30) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "O nome de usuário deve conter entre 3 e 30 caracteres."
+        }
+        };
+    }
+
+    if (username !== username.trim()) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "O nome de usuário não pode começar ou terminar com espaços."
+        }
+        };
+    }
+
+    if (username !== username.toLowerCase()) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "O nome de usuário deve usar apenas letras minúsculas."
+        }
+        };
+    }
+
+    if (!/^[a-z0-9._]+$/.test(username)) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "O nome de usuário contém caracteres inválidos."
+        }
+        };
+    }
+
+    if (displayName !== displayName.trim()) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "O nome de exibição não pode começar ou terminar com espaços."
+        }
+        };
+    }
+
+    if (displayName.length > 60) {
+        return {
+        data: null,
+        error: {
+            code: "VALIDATION_ERROR",
+            message: "O nome de exibição deve conter no máximo 60 caracteres."
+        }
+        };
+    }
+
     const emailExists = mockUsers.some(
         (user) => user.email === email
     );
@@ -22,21 +102,21 @@ export const mockAuthAdapter = {
             data: null,
             error: {
                 code: "EMAIL_EXISTS",
-                message: "E-mail já cadastrado"
+                message: "O e-mail já está em uso."
             }
         };
     }
 
-    const userNameExists = mockUsers.some(
+    const usernameExists = mockUsers.some(
         (user) => user.username === username
     );
 
-    if (userNameExists) {
+    if (usernameExists) {
         return {
             data: null,
             error: {
                 code: "USERNAME_EXISTS",
-                message: "Nome de usuário já cadastrado"
+                message: "O nome de usuário já está em uso."
             }
         };
     }
@@ -66,7 +146,7 @@ export const mockAuthAdapter = {
         data: currentSession,
         error: null
     };
-  },
+},
 
   async signIn({ email, password }) {
     const user = mockUsers.find(

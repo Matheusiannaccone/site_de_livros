@@ -1,23 +1,33 @@
+import { getAuthAdapter } from "./dataSource.js";
+
 export async function signUp({ email, password, username, displayName }) {
-  throw new Error("Not implemented");
+  return getAuthAdapter().signUp({
+    email,
+    password,
+    username,
+    displayName
+  });
 }
 
 export async function signIn({ email, password }) {
-  throw new Error("Not implemented");
+  return getAuthAdapter().signIn({
+    email,
+    password
+  });
 }
 
 export async function signOut() {
-  throw new Error("Not implemented");
+  return getAuthAdapter().signOut();
 }
 
 export async function getSession() {
-  throw new Error("Not implemented");
+  return getAuthAdapter().getSession();
 }
 
 export async function getCurrentUser() {
-  throw new Error("Not implemented");
+  return getAuthAdapter().getCurrentUser();
 }
 
 export function onAuthStateChange(callback) {
-  throw new Error("Not implemented");
+  return getAuthAdapter().onAuthStateChange(callback);
 }

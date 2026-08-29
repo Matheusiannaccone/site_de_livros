@@ -1,3 +1,5 @@
+import { mockAuthAdapter } from "./adapters/mock/authAdapter.js";
+
 export function getDataSource() {
   const hostname = window.location.hostname;
 
@@ -9,9 +11,11 @@ export function getDataSource() {
 }
 
 export function getAuthAdapter() {
-  if (getDataSource() === "mock") {
+  const dataSource = getDataSource();
+
+  if (dataSource === "mock") {
     return mockAuthAdapter;
   }
 
-  return supabaseAuthAdapter;
+  return new Error("Supabase auth adapter not implemented yet.");
 }
