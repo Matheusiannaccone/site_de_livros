@@ -58,8 +58,6 @@ function normalizeAuthError(error) {
   };
 }
 
-const normalizedError = normalizeAuthError(error);
-
 export const supabaseAuthAdapter = {
   async signUp({ email, password, username, displayName }) {
     const { data, error } = await supabase.auth.signUp({
@@ -72,6 +70,8 @@ export const supabaseAuthAdapter = {
         }
       }
     });
+
+    const normalizedError = normalizeAuthError(error);
 
     if (normalizedError) {
       return {
@@ -91,6 +91,8 @@ export const supabaseAuthAdapter = {
       email,
       password
     });
+
+    const normalizedError = normalizeAuthError(error);
 
     if (normalizedError) {
       return {
