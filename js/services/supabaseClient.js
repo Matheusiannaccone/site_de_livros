@@ -17,8 +17,3 @@ export const supabase = createClient(
   supabaseUrl,
   supabaseKey
 );
-
-console.log(
-  "Supabase:",
-  isLocal ? "LOCAL": "REMOTE"
-);

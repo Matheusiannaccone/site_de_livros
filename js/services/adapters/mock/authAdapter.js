@@ -11,6 +11,14 @@ const mockUsers = [
     }
 ]
 
+const authListeners = [];
+
+function notifyAuthStateChange(event, session) {
+  authListeners.forEach((callback) => {
+    callback(event, session);
+  });
+}
+
 export const mockAuthAdapter = {
   async signUp({ email, password, username, displayName }) {
     if (!email || !password || !username || !displayName) {
@@ -142,6 +150,8 @@ export const mockAuthAdapter = {
         user: currentUser
     };
 
+    notifyAuthStateChange("SIGNED_IN", currentSession);
+
     return {
         data: currentSession,
         error: null
@@ -174,6 +184,8 @@ export const mockAuthAdapter = {
         user: currentUser
     };
 
+    notifyAuthStateChange("SIGNED_IN", currentSession);
+
     return {
         data: currentSession,
         error: null
@@ -183,6 +195,8 @@ export const mockAuthAdapter = {
   async signOut() {
     currentUser = null;
     currentSession = null;
+
+    notifyAuthStateChange("SIGNED_OUT", null);
 
     return {
         data: null,
@@ -215,6 +229,20 @@ export const mockAuthAdapter = {
   },
 
   onAuthStateChange(callback) {
-    throw new Error("Not implemented");
+    authListeners.push(callback);
+
+    return {
+        data: {
+            subscription: {
+                unsubscribe() {
+                  const index = authListeners.indexOf(callback);
+
+                  if (index !== -1) {
+                    authListeners.splice(index, 1);
+                  }
+                }
+            }
+        }
+    }
   }
 };
