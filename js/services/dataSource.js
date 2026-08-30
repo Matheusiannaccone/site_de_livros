@@ -1,8 +1,6 @@
 import { mockAuthAdapter } from "./adapters/mock/authAdapter.js";
 import { supabaseAuthAdapter } from "./adapters/supabase/authAdapter.js";
 
-console.log("Data source:", getDataSource());
-
 export function getDataSource() {
   const hostname = window.location.hostname;
 
