@@ -7,13 +7,17 @@ function normalizeAuthError(error) {
 
   const message = error.message?.toLowerCase() ?? "";
 
-  if (
-    message.includes("invalid login credentials") ||
-    message.includes("auth session missing")
-  ) {
+  if (message.includes("invalid login credentials")) {
     return {
       code: "UNAUTHENTICATED",
       message: "E-mail ou senha inválidos."
+    };
+  }
+
+  if (message.includes("auth session missing")) {
+    return {
+      code: "UNAUTHENTICATED",
+      message: "Nenhuma sessão autenticada encontrada."
     };
   }
 
@@ -54,6 +58,8 @@ function normalizeAuthError(error) {
   };
 }
 
+const normalizedError = normalizeAuthError(error);
+
 export const supabaseAuthAdapter = {
   async signUp({ email, password, username, displayName }) {
     const { data, error } = await supabase.auth.signUp({
@@ -67,9 +73,16 @@ export const supabaseAuthAdapter = {
       }
     });
 
+    if (normalizedError) {
+      return {
+        data: null,
+        error: normalizedError
+      };
+    }
+
     return {
       data,
-      error: normalizeAuthError(error)
+      error: null
     };
   },
 
@@ -79,9 +92,16 @@ export const supabaseAuthAdapter = {
       password
     });
 
+    if (normalizedError) {
+      return {
+        data: null,
+        error: normalizedError
+      };
+    }
+
     return {
       data,
-      error: normalizeAuthError(error)
+      error: null
     };
   },
 
