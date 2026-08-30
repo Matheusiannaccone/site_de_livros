@@ -4,10 +4,10 @@ let currentSession = null;
 const mockUsers = [
     {
         id: "mock-user-1",
-        email: "teste@ewritter.com",
+        email: "teste1@gmail.com",
         password: "090909",
-        username: "teste",
-        displayName: "Usuário Teste",
+        username: "teste1",
+        displayName: "Usuário Teste 1",
     }
 ]
 
@@ -101,7 +101,7 @@ export const mockAuthAdapter = {
         return {
             data: null,
             error: {
-                code: "EMAIL_EXISTS",
+                code: "CONFLICT",
                 message: "O e-mail já está em uso."
             }
         };
@@ -115,7 +115,7 @@ export const mockAuthAdapter = {
         return {
             data: null,
             error: {
-                code: "USERNAME_EXISTS",
+                code: "CONFLICT",
                 message: "O nome de usuário já está em uso."
             }
         };
@@ -198,10 +198,20 @@ export const mockAuthAdapter = {
   },
 
   async getCurrentUser() {
+    if (!currentUser) {
+        return {
+            data: null,
+            error: {
+                code: "UNAUTHENTICATED",
+                message: "Nenhuma sessão autenticada encontrada."
+            }
+        };
+    }
+
     return {
         data: currentUser,
         error: null
-    }
+    };
   },
 
   onAuthStateChange(callback) {

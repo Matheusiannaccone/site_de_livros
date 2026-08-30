@@ -121,7 +121,7 @@ after insert on auth.users
 for each row
 execute function public.handle_new_user();
 
-create or replace function public.handle_updated_user_at()
+create or replace function public.handle_updated_user()
 returns trigger
 language plpgsql
 set search_path = ''
