@@ -20,3 +20,10 @@ values
   ('Terror', 'terror'),
   ('Ficção Histórica', 'ficcao-historica'),
   ('Fanfic', 'fanfic');
+
+alter table public.genres enable row level security;
+
+create policy "genres_select_public"
+on public.genres
+for select
+using (true);
