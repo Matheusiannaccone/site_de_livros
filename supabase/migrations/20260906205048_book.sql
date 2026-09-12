@@ -38,3 +38,41 @@ CREATE TABLE books (
             )
         )
 );
+
+alter table books enable row level security;
+
+
+create policy "books_select_visible"
+on public.books
+for select
+using (
+    status = 'published'
+    or author_id = auth.uid()
+);
+
+create policy "books_insert_own"
+on public.books
+for insert
+to authenticated
+with check (
+    author_id = auth.uid()
+);
+
+create policy "books_update_own"
+on public.books
+for update
+to authenticated
+using (
+    author_id = auth.uid()
+)
+with check (
+    author_id = auth.uid()
+);
+
+create policy "books_delete_own"
+on public.books
+for delete
+to authenticated
+using (
+    author_id = auth.uid()
+);
