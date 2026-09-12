@@ -1,4 +1,4 @@
-CREATE TABLE books (
+CREATE TABLE public.books (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     author_id UUID,
@@ -23,7 +23,7 @@ CREATE TABLE books (
 
     CONSTRAINT fk_books_author
         FOREIGN KEY (author_id)
-        REFERENCES profiles(id)
+        REFERENCES public.profiles(id)
         ON DELETE SET NULL,
 
     CONSTRAINT chk_books_status
@@ -36,7 +36,10 @@ CREATE TABLE books (
                 'completed',
                 'discontinued'
             )
-        )
+        ),
+
+    CONSTRAINT chk_books_title_not_blank
+        CHECK (char_length(btrim(title)) > 0)
 );
 
 alter table books enable row level security;
@@ -76,3 +79,30 @@ to authenticated
 using (
     author_id = auth.uid()
 );
+
+create or replace function public.handle_book_publication()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+    if new.status = 'published'
+       and old.status is distinct from 'published' then
+        new.published_at := now();
+    elsif new.status = 'draft' then
+        new.published_at := null;
+    end if;
+
+    return new;
+end;
+$$;
+
+create trigger on_books_updated
+before update on public.books
+for each row
+execute function public.handle_updated_user();
+
+create trigger on_book_publication_status_changed
+before update of status on public.books
+for each row
+execute function public.handle_book_publication();
