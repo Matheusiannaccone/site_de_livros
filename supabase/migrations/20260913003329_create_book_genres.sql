@@ -16,3 +16,46 @@ create table public.book_genres (
     constraint pk_book_genres
         primary key (book_id, genre_id)
 );
+
+alter table public.book_genres enable row level security;
+
+create policy "book_genres_select_visible"
+on public.book_genres
+for select
+using (
+    exists (
+        select 1
+        from public.books b
+        where b.id = book_genres.book_id
+          and (
+              b.status = 'published'
+              or b.author_id = auth.uid()
+          )
+    )
+);
+
+create policy "book_genres_insert_by_book_author"
+on public.book_genres
+for insert
+to authenticated
+with check (
+    exists (
+        select 1
+        from public.books b
+        where b.id = book_genres.book_id
+          and b.author_id = auth.uid()
+    )
+);
+
+create policy "book_genres_delete_by_book_author"
+on public.book_genres
+for delete
+to authenticated
+using (
+    exists (
+        select 1
+        from public.books b
+        where b.id = book_genres.book_id
+          and b.author_id = auth.uid()
+    )
+);
