@@ -86,10 +86,21 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-    if new.status = 'published'
-       and old.status is distinct from 'published' then
-        new.published_at := now();
-    elsif new.status = 'draft' then
+    if new.status = 'published' then
+
+        if tg_op = 'INSERT' then
+            new.published_at := now();
+
+        elsif old.status is distinct from 'published' then
+            new.published_at := now();
+
+        else
+            -- Impede alteração manual da data original.
+            new.published_at := old.published_at;
+        end if;
+
+    else
+        -- Livro draft nunca possui published_at.
         new.published_at := null;
     end if;
 
@@ -103,6 +114,6 @@ for each row
 execute function public.handle_updated_user();
 
 create trigger on_book_publication_status_changed
-before update of status on public.books
+before insert or update of status on public.books
 for each row
 execute function public.handle_book_publication();
